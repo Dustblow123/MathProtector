@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sauve la Terre - Tables de Multiplication</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Panel latéral "Qui joue ?" -->
+    <div id="player-panel" class="player-panel">
+        <div class="player-panel-header">
+            <h2>Qui joue ?</h2>
+            <button id="close-player-panel" class="close-panel-btn">&times;</button>
+        </div>
+        <!-- Section statistiques du joueur actif -->
+        <div id="player-stats-section" class="player-stats-section hidden">
+            <div class="player-stats-header">
+                <span id="stats-player-avatar" class="stats-avatar">👤</span>
+                <span id="stats-player-name" class="stats-name">Invité</span>
+            </div>
+            <div class="player-stats-grid">
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-highscore">0</span>
+                    <span class="player-stat-label">Record</span>
+                </div>
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-games">0</span>
+                    <span class="player-stat-label">Parties</span>
+                </div>
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-asteroids">0</span>
+                    <span class="player-stat-label">Astéroïdes</span>
+                </div>
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-combo">x0</span>
+                    <span class="player-stat-label">Meilleur combo</span>
+                </div>
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-avg-asteroids">0</span>
+                    <span class="player-stat-label">Moy/partie</span>
+                </div>
+                <div class="player-stat-item">
+                    <span class="player-stat-value" id="stat-avg-score">0</span>
+                    <span class="player-stat-label">Score moy</span>
+                </div>
+            </div>
+        </div>
+        <div id="profiles-list" class="profiles-list">
+            <!-- Liste des profils générée dynamiquement -->
+        </div>
+        <button id="new-profile-btn" class="new-profile-btn">
+            <span class="new-profile-icon">+</span>
+            <span>Nouveau joueur</span>
+        </button>
+    </div>
+
+    <!-- Overlay pour fermer le panel -->
+    <div id="player-panel-overlay" class="player-panel-overlay"></div>
+
+    <!-- Modal création/édition de profil -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Nouveau joueur</h2>
+                <button id="close-modal-btn" class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="profile-name">Nom</label>
+                    <input type="text" id="profile-name" class="profile-input" maxlength="15" placeholder="Entre ton nom...">
+                </div>
+                <div class="form-group">
+                    <label>Avatar</label>
+                    <div id="avatar-grid" class="avatar-grid">
+                        <!-- Avatars générés dynamiquement -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Couleur</label>
+                    <div id="color-swatches" class="color-swatches">
+                        <!-- Couleurs générées dynamiquement -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Prévisualisation</label>
+                    <div id="profile-preview" class="profile-preview">
+                        <span id="preview-avatar" class="preview-avatar">🧑‍🚀</span>
+                        <span id="preview-name" class="preview-name">Joueur</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-profile-btn" class="delete-profile-btn hidden">Supprimer</button>
+                <div class="modal-actions">
+                    <button id="cancel-profile-btn" class="secondary-btn">Annuler</button>
+                    <button id="save-profile-btn" class="play-btn">Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran Leaderboard -->
+    <div id="leaderboard-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="leaderboard-container">
+            <h1 class="leaderboard-title">🏆 Classement</h1>
+            <div class="leaderboard-filters">
+                <div class="filter-group">
+                    <label>Mode</label>
+                    <select id="leaderboard-mode-filter" class="filter-select">
+                        <option value="all">Tous</option>
+                        <option value="infinite">Infini</option>
+                        <option value="time">Temps</option>
+                        <option value="asteroids">Astéroïdes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Difficulté</label>
+                    <select id="leaderboard-difficulty-filter" class="filter-select">
+                        <option value="all">Toutes</option>
+                        <option value="easy">Facile</option>
+                        <option value="medium">Moyen</option>
+                        <option value="hard">Difficile</option>
+                    </select>
+                </div>
+            </div>
+            <div id="leaderboard-list" class="leaderboard-list">
+                <!-- Entrées générées dynamiquement -->
+            </div>
+            <div class="leaderboard-actions">
+                <button id="leaderboard-back-btn" class="secondary-btn">Retour</button>
+                <button id="leaderboard-reset-btn" class="danger-btn">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran d'accueil -->
+    <div id="menu-screen" class="screen active">
+        <div class="stars-bg"></div>
+        <div class="menu-container">
+            <!-- Bouton sélecteur de joueur -->
+            <button id="open-player-panel" class="player-selector-btn">
+                <span id="current-player-avatar">👤</span>
+                <span id="current-player-name">Invité</span>
+            </button>
+
+            <h1 class="game-title">
+                <span class="title-line">Sauve la</span>
+                <span class="title-earth">Terre</span>
+            </h1>
+            <p class="subtitle">Tables de Multiplication</p>
+
+            <div class="menu-section">
+                <h2>Sélectionne les tables</h2>
+                <div class="tables-grid">
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="1" checked>
+                        <span>1</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="2" checked>
+                        <span>2</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="3" checked>
+                        <span>3</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="4" checked>
+                        <span>4</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="5" checked>
+                        <span>5</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="6">
+                        <span>6</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="7">
+                        <span>7</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="8">
+                        <span>8</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="9">
+                        <span>9</span>
+                    </label>
+                    <label class="table-checkbox">
+                        <input type="checkbox" value="10">
+                        <span>10</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h2>Difficulté</h2>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">
+                        <span class="diff-icon">🌟</span>
+                        <span class="diff-name">Facile</span>
+                    </button>
+                    <button class="difficulty-btn active" data-difficulty="medium">
+                        <span class="diff-icon">🌟🌟</span>
+                        <span class="diff-name">Moyen</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="hard">
+                        <span class="diff-icon">🌟🌟🌟</span>
+                        <span class="diff-name">Difficile</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h2>Mode de Jeu</h2>
+                <div class="gamemode-buttons">
+                    <button class="gamemode-btn active" data-mode="infinite">&#8734; Infini</button>
+                    <button class="gamemode-btn" data-mode="time">&#9201; Temps</button>
+                    <button class="gamemode-btn" data-mode="asteroids">&#9732; Asteroides</button>
+                </div>
+
+                <!-- Options temps (cache par defaut) -->
+                <div id="time-options" class="mode-options hidden">
+                    <button class="option-btn" data-time="60">1 min</button>
+                    <button class="option-btn active" data-time="120">2 min</button>
+                    <button class="option-btn" data-time="180">3 min</button>
+                </div>
+
+                <!-- Options asteroides (cache par defaut) -->
+                <div id="asteroids-options" class="mode-options hidden">
+                    <button class="option-btn" data-count="10">10</button>
+                    <button class="option-btn active" data-count="20">20</button>
+                    <button class="option-btn" data-count="50">50</button>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <div class="sound-controls">
+                    <button id="toggle-music" class="sound-btn active" title="Musique">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                    </button>
+                    <button id="toggle-sound" class="sound-btn active" title="Effets sonores">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                    </button>
+                </div>
+                <label class="mode-checkbox">
+                    <input type="checkbox" id="split-mode">
+                    <span>Mode Separation</span>
+                </label>
+            </div>
+
+            <button id="start-game" class="play-btn">
+                <span>JOUER</span>
+                <svg viewBox="0 0 24 24" width="32" height="32">
+                    <path fill="currentColor" d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+
+            <button id="leaderboard-btn" class="leaderboard-btn">🏆 Classement</button>
+
+            <p class="high-score">Meilleur score: <span id="menu-high-score">0</span></p>
+        </div>
+    </div>
+
+    <!-- Écran de jeu -->
+    <div id="game-screen" class="screen">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="hud">
+            <div class="hud-left">
+                <div class="hud-item">
+                    <span class="hud-label">Score</span>
+                    <span id="score" class="hud-value">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Combo</span>
+                    <span id="combo" class="hud-value">x1</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <div id="lives" class="lives">
+                    <span class="life">❤️</span>
+                    <span class="life">❤️</span>
+                    <span class="life">❤️</span>
+                </div>
+                <div id="time-display" class="mode-display hidden">⏱️ <span id="timer">2:00</span></div>
+                <div id="progress-display" class="mode-display hidden">☄️ <span id="progress">0/20</span></div>
+            </div>
+            <div class="hud-right">
+                <button id="pause-btn" class="icon-btn" title="Pause">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                </button>
+                <button id="game-sound-btn" class="icon-btn" title="Son">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="answer-container">
+            <input type="number" id="answer-input" placeholder="Ta réponse..." autocomplete="off">
+            <button id="submit-answer" class="submit-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Écran Game Over -->
+    <div id="gameover-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="gameover-container">
+            <h1 class="gameover-title">Game Over</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Score final</span>
+                    <span id="final-score" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Meilleur combo</span>
+                    <span id="best-combo" class="stat-value">x1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Astéroïdes détruits</span>
+                    <span id="asteroids-destroyed" class="stat-value">0</span>
+                </div>
+                <div class="stat new-record hidden">
+                    <span class="stat-label">🏆 NOUVEAU RECORD! 🏆</span>
+                </div>
+            </div>
+            <div class="gameover-buttons">
+                <button id="retry-btn" class="play-btn">Rejouer</button>
+                <button id="menu-btn" class="secondary-btn">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran Pause -->
+    <div id="pause-screen" class="screen overlay">
+        <div class="pause-container">
+            <h2>PAUSE</h2>
+            <button id="resume-btn" class="play-btn">Reprendre</button>
+            <button id="quit-btn" class="secondary-btn">Quitter</button>
+        </div>
+    </div>
+
+    <!-- Écran Victoire -->
+    <div id="victory-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="victory-container">
+            <div class="trophy-glow"></div>
+            <div class="trophy">🏆</div>
+            <h1 class="victory-title">VICTOIRE!</h1>
+            <p class="victory-subtitle">Tu as sauvé la Terre!</p>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Score final</span>
+                    <span id="victory-score" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Meilleur combo</span>
+                    <span id="victory-combo" class="stat-value">x1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Astéroïdes détruits</span>
+                    <span id="victory-destroyed" class="stat-value">0</span>
+                </div>
+                <div class="stat new-record hidden">
+                    <span class="stat-label">🏆 NOUVEAU RECORD! 🏆</span>
+                </div>
+            </div>
+            <div class="confetti-rain"></div>
+            <div class="victory-buttons">
+                <button id="victory-retry-btn" class="play-btn">Rejouer</button>
+                <button id="victory-menu-btn" class="secondary-btn">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/asteroid.js"></script>
+    <script src="js/powerup.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
