@@ -113,6 +113,20 @@ class UIManager {
         this.selectedTime = 120;
         this.selectedCount = 20;
 
+        // État des opérations
+        this.selectedOperation = 'multiplication';
+        this.selectedDigitCount = 1;
+        this.allowNegatives = false;
+
+        // Éléments opérations
+        this.operationBtns = document.querySelectorAll('.operation-btn');
+        this.operationOptions = document.getElementById('operation-options');
+        this.tablesSection = document.getElementById('tables-section');
+        this.negativeOption = document.getElementById('negative-option');
+        this.allowNegativesCheckbox = document.getElementById('allow-negatives');
+        this.digitBtns = document.querySelectorAll('.digit-btn');
+        this.gameSubtitle = document.getElementById('game-subtitle');
+
         // PowerUp
         this.powerUpIcon = null;
         this.shieldBubble = null;
@@ -133,6 +147,32 @@ class UIManager {
             });
         });
 
+        // Sélection type d'opération
+        this.operationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.operationBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedOperation = btn.dataset.operation;
+                this.updateOperationOptions();
+            });
+        });
+
+        // Sélection nombre de chiffres
+        this.digitBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.digitBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedDigitCount = parseInt(btn.dataset.digits);
+            });
+        });
+
+        // Checkbox résultats négatifs
+        if (this.allowNegativesCheckbox) {
+            this.allowNegativesCheckbox.addEventListener('change', () => {
+                this.allowNegatives = this.allowNegativesCheckbox.checked;
+            });
+        }
+
         // Toggle musique (menu)
         this.toggleMusicBtn.addEventListener('click', () => {
             const enabled = callbacks.onToggleMusic();
@@ -148,7 +188,9 @@ class UIManager {
         // Démarrer le jeu
         this.startBtn.addEventListener('click', () => {
             const tables = this.getSelectedTables();
-            if (tables.length === 0) {
+            const needsTables = ['multiplication', 'division'].includes(this.selectedOperation);
+
+            if (needsTables && tables.length === 0) {
                 this.showError('Sélectionne au moins une table !');
                 return;
             }
@@ -772,8 +814,51 @@ class UIManager {
         return {
             mode: this.selectedGameMode,
             time: this.selectedTime,
-            count: this.selectedCount
+            count: this.selectedCount,
+            operation: {
+                type: this.selectedOperation,
+                tables: this.getSelectedTables(),
+                digitCount: this.selectedDigitCount,
+                allowNegatives: this.allowNegatives
+            }
         };
+    }
+
+    /**
+     * Met à jour l'affichage des options selon le type d'opération
+     */
+    updateOperationOptions() {
+        const needsTables = ['multiplication', 'division'].includes(this.selectedOperation);
+        const needsDigitConfig = ['addition', 'subtraction', 'combined'].includes(this.selectedOperation);
+        const hasSub = ['subtraction', 'combined'].includes(this.selectedOperation);
+
+        // Afficher/masquer la section des tables
+        if (this.tablesSection) {
+            this.tablesSection.classList.toggle('hidden', !needsTables);
+        }
+
+        // Afficher/masquer les options de configuration
+        if (this.operationOptions) {
+            this.operationOptions.classList.toggle('hidden', !needsDigitConfig);
+        }
+
+        // Afficher/masquer l'option des résultats négatifs
+        if (this.negativeOption) {
+            this.negativeOption.classList.toggle('hidden', !hasSub);
+        }
+
+        // Mise à jour du sous-titre
+        const subtitles = {
+            multiplication: 'Tables de Multiplication',
+            addition: 'Additions',
+            subtraction: 'Soustractions',
+            division: 'Divisions',
+            combined: 'Calcul Mental'
+        };
+
+        if (this.gameSubtitle) {
+            this.gameSubtitle.textContent = subtitles[this.selectedOperation] || 'Calcul Mental';
+        }
     }
 
     /**

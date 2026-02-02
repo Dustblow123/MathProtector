@@ -6,11 +6,11 @@ class PowerUp {
     /**
      * @param {number} canvasWidth - Largeur du canvas
      * @param {number} canvasHeight - Hauteur du canvas
-     * @param {number[]} tables - Tables de multiplication a utiliser
+     * @param {Object} operationConfig - Configuration de l'opération
      * @param {string} difficulty - Niveau de difficulte
      * @param {string} type - Type de powerup (shield, freeze, repulsor)
      */
-    constructor(canvasWidth, canvasHeight, tables, difficulty, type = null) {
+    constructor(canvasWidth, canvasHeight, operationConfig, difficulty, type = null) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
 
@@ -18,11 +18,13 @@ class PowerUp {
         const types = ['shield', 'freeze', 'repulsor'];
         this.type = type || types[Math.floor(Math.random() * types.length)];
 
-        // Generer la multiplication
-        this.table = tables[Math.floor(Math.random() * tables.length)];
-        this.multiplier = Math.floor(Math.random() * 10) + 1;
-        this.answer = this.table * this.multiplier;
-        this.question = `${this.table} x ${this.multiplier}`;
+        // Generer la question via QuestionGenerator
+        const generator = new QuestionGenerator(operationConfig);
+        const q = generator.generate();
+
+        this.question = q.question;
+        this.answer = q.answer;
+        this.operator = q.operator;
 
         // Taille et position
         this.size = 45;

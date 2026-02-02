@@ -1,22 +1,27 @@
 /**
- * Classe représentant un astéroïde avec une multiplication
+ * Classe représentant un astéroïde avec une question mathématique
  */
 class Asteroid {
     /**
      * @param {number} canvasWidth - Largeur du canvas
      * @param {number} canvasHeight - Hauteur du canvas
-     * @param {number[]} tables - Tables de multiplication à utiliser
+     * @param {Object} operationConfig - Configuration de l'opération
      * @param {string} difficulty - Niveau de difficulté (easy, medium, hard)
      */
-    constructor(canvasWidth, canvasHeight, tables, difficulty, options = {}) {
+    constructor(canvasWidth, canvasHeight, operationConfig, difficulty, options = {}) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
 
-        // Générer la multiplication
-        this.table = tables[Math.floor(Math.random() * tables.length)];
-        this.multiplier = Math.floor(Math.random() * 10) + 1;
-        this.answer = this.table * this.multiplier;
-        this.question = `${this.table} × ${this.multiplier}`;
+        // Stocker la config pour la création de fragments
+        this.operationConfig = operationConfig;
+
+        // Générer la question via QuestionGenerator
+        const generator = new QuestionGenerator(operationConfig);
+        const q = generator.generate();
+
+        this.question = q.question;
+        this.answer = q.answer;
+        this.operator = q.operator;
 
         // Position initiale (en haut, position X aléatoire)
         this.size = options.size || 60;
@@ -332,17 +337,17 @@ class Asteroid {
 
     /**
      * Crée 2 fragments à partir de cet astéroïde (mode séparation)
-     * @param {number[]} tables - Tables de multiplication disponibles
+     * @param {Object} operationConfig - Configuration de l'opération
      * @param {string} difficulty - Niveau de difficulté
      * @returns {Asteroid[]} - Les 2 fragments créés
      */
-    createFragments(tables, difficulty) {
+    createFragments(operationConfig, difficulty) {
         const fragments = [];
         for (let i = 0; i < 2; i++) {
             const fragment = new Asteroid(
                 this.canvasWidth,
                 this.canvasHeight,
-                tables,
+                operationConfig,
                 difficulty,
                 {
                     x: this.x + (i === 0 ? -30 : 30),

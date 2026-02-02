@@ -81,30 +81,37 @@ body {
     position: relative;
     z-index: 1;
     text-align: center;
-    padding: 2rem;
-    max-width: 500px;
-    width: 90%;
+    padding: 0.75rem 1rem;
+    max-width: 850px;
+    width: 98%;
+}
+
+/* Header compact */
+.menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.title-block {
+    text-align: left;
 }
 
 .game-title {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.6rem;
+    margin-bottom: 0;
     text-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
-}
-
-.title-line {
-    display: block;
-    color: var(--text);
+    white-space: nowrap;
 }
 
 .title-earth {
-    display: block;
-    font-size: 4rem;
+    font-size: 1.8rem;
     background: linear-gradient(135deg, #4fc3f7, #69f0ae);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: pulse 2s ease-in-out infinite;
 }
 
 @keyframes pulse {
@@ -114,32 +121,150 @@ body {
 
 .subtitle {
     color: var(--text-dim);
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Grille du menu à 2 colonnes */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: left;
+}
+
+.menu-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
 }
 
 .menu-section {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    border-radius: 10px;
+    padding: 0.75rem;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .menu-section h2 {
-    font-size: 1rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* Footer du menu (classement + score) */
+.menu-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.menu-footer .high-score {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* Options row */
+.options-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.mode-checkbox.compact {
+    padding: 0.5rem 0.75rem;
+    margin-top: 0;
+    font-size: 0.8rem;
+}
+
+/* Boutons d'opération */
+.operation-buttons {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: center;
+}
+
+.operation-btn {
+    flex: 1;
+    padding: 0.5rem 0.3rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.operation-btn:hover {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.1);
+}
+
+.operation-btn.active {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.2);
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+}
+
+/* Options de configuration */
+.config-group {
+    margin-bottom: 0.5rem;
+}
+
+.config-group:last-child {
+    margin-bottom: 0;
+}
+
+.config-group > label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.digit-options {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.digit-btn {
+    flex: 1;
+    padding: 0.4rem 0.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+}
+
+.digit-btn:hover {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.1);
+}
+
+.digit-btn.active {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.2);
 }
 
 /* Grille des tables */
 .tables-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 .table-checkbox {
@@ -157,17 +282,18 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.4rem;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    border-radius: 6px;
+    transition: all 0.2s ease;
     font-weight: bold;
+    font-size: 0.85rem;
 }
 
 .table-checkbox input:checked + span {
     background: var(--primary);
     color: var(--dark);
-    box-shadow: 0 0 15px rgba(79, 195, 247, 0.5);
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.4);
 }
 
 .table-checkbox:hover span {
@@ -177,28 +303,18 @@ body {
 /* Boutons difficulté */
 .difficulty-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 .difficulty-btn {
     flex: 1;
-    padding: 1rem 0.5rem;
+    padding: 0.5rem 0.3rem;
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--text);
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-}
-
-.difficulty-btn .diff-icon {
-    display: block;
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-}
-
-.difficulty-btn .diff-name {
-    display: block;
     font-size: 0.9rem;
 }
 
@@ -210,19 +326,18 @@ body {
 .difficulty-btn.active {
     border-color: var(--primary);
     background: rgba(79, 195, 247, 0.2);
-    box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+    box-shadow: 0 0 15px rgba(79, 195, 247, 0.3);
 }
 
 /* Contrôles son */
 .sound-controls {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .sound-btn {
-    width: 50px;
-    height: 50px;
+    width: 36px;
+    height: 36px;
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--text-dim);
@@ -248,13 +363,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     cursor: pointer;
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 0.75rem;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 8px;
     transition: all 0.3s ease;
-    margin-top: 1rem;
 }
 
 .mode-checkbox:hover {
@@ -262,8 +376,8 @@ body {
 }
 
 .mode-checkbox input {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     accent-color: var(--secondary);
     cursor: pointer;
 }
@@ -271,6 +385,7 @@ body {
 .mode-checkbox span {
     color: var(--text);
     font-weight: 500;
+    font-size: 0.8rem;
 }
 
 .mode-checkbox input:checked + span {
@@ -282,9 +397,9 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem 3rem;
-    font-size: 1.5rem;
+    gap: 0.4rem;
+    padding: 0.75rem 2rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: var(--dark);
     background: linear-gradient(135deg, var(--primary), var(--success));
@@ -294,12 +409,13 @@ body {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 2px;
-    box-shadow: 0 5px 30px rgba(79, 195, 247, 0.4);
+    box-shadow: 0 4px 20px rgba(79, 195, 247, 0.4);
+    width: 100%;
 }
 
 .play-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 40px rgba(79, 195, 247, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(79, 195, 247, 0.6);
 }
 
 .play-btn:active {
@@ -307,8 +423,8 @@ body {
 }
 
 .secondary-btn {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
     color: var(--text);
     background: transparent;
     border: 2px solid var(--text-dim);
@@ -323,8 +439,9 @@ body {
 }
 
 .high-score {
-    margin-top: 1.5rem;
+    margin-top: 0;
     color: var(--text-dim);
+    font-size: 0.85rem;
 }
 
 #menu-high-score {
@@ -1119,20 +1236,19 @@ body {
 /* Boutons mode de jeu */
 .gamemode-buttons {
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 .gamemode-btn {
-    flex: 1;
-    padding: 0.75rem 0.5rem;
+    padding: 0.4rem 0.5rem;
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--text);
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .gamemode-btn:hover {
@@ -1143,28 +1259,28 @@ body {
 .gamemode-btn.active {
     border-color: var(--secondary);
     background: rgba(124, 77, 255, 0.2);
-    box-shadow: 0 0 20px rgba(124, 77, 255, 0.3);
+    box-shadow: 0 0 15px rgba(124, 77, 255, 0.3);
 }
 
 /* Options de mode */
 .mode-options {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.3rem;
     justify-content: center;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .option-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 0.6rem;
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--text);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .option-btn:hover {
@@ -1318,31 +1434,106 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
+    .menu-container {
+        padding: 0.5rem;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .menu-header {
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .title-block {
+        text-align: center;
+    }
+
+    .menu-grid {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+    }
+
     .game-title {
-        font-size: 2rem;
+        font-size: 1.3rem;
     }
 
     .title-earth {
-        font-size: 2.5rem;
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .menu-section {
+        padding: 0.5rem;
+    }
+
+    .menu-section h2 {
+        font-size: 0.6rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .operation-btn {
+        padding: 0.35rem 0.15rem;
+        font-size: 0.95rem;
     }
 
     .tables-grid {
         grid-template-columns: repeat(5, 1fr);
-        gap: 0.3rem;
+        gap: 0.2rem;
     }
 
     .table-checkbox span {
-        padding: 0.5rem;
-        font-size: 0.9rem;
+        padding: 0.25rem;
+        font-size: 0.7rem;
     }
 
     .difficulty-buttons {
-        flex-direction: column;
+        gap: 0.2rem;
     }
 
     .difficulty-btn {
-        padding: 0.75rem;
+        padding: 0.35rem 0.15rem;
+        font-size: 0.75rem;
+    }
+
+    .play-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .menu-footer {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .gamemode-btn {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    .sound-btn {
+        width: 30px;
+        height: 30px;
+    }
+
+    .mode-checkbox {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.7rem;
+    }
+
+    .mode-checkbox input {
+        width: 14px;
+        height: 14px;
+    }
+
+    .options-row {
+        flex-direction: column;
+        gap: 0.3rem;
     }
 
     #hud {
@@ -1374,10 +1565,6 @@ body {
 
     .stat-value {
         font-size: 1.5rem;
-    }
-
-    .gamemode-buttons {
-        flex-direction: column;
     }
 
     .victory-title {
@@ -1676,27 +1863,27 @@ body {
 .player-selector-btn {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 0.5rem;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     color: var(--text);
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1rem;
+    font-size: 0.85rem;
     backdrop-filter: blur(10px);
 }
 
 .player-selector-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: var(--primary);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .player-selector-btn #current-player-avatar {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
 }
 
 .player-selector-btn #current-player-name {
@@ -2144,10 +2331,10 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2rem;
-    margin-top: 1rem;
-    font-size: 1rem;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    margin: 0;
+    font-size: 0.8rem;
     font-weight: bold;
     color: var(--warning);
     background: transparent;
@@ -2159,8 +2346,8 @@ body {
 
 .leaderboard-btn:hover {
     background: rgba(255, 215, 64, 0.15);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(255, 215, 64, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 15px rgba(255, 215, 64, 0.3);
 }
 
 /* ====================== */
@@ -2438,12 +2625,13 @@ body {
     }
 
     .player-selector-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.3rem;
     }
 
     .player-selector-btn #current-player-avatar {
-        font-size: 1.3rem;
+        font-size: 1rem;
     }
 
     .modal-content {

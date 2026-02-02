@@ -139,134 +139,131 @@
     <div id="menu-screen" class="screen active">
         <div class="stars-bg"></div>
         <div class="menu-container">
-            <!-- Bouton sélecteur de joueur -->
-            <button id="open-player-panel" class="player-selector-btn">
-                <span id="current-player-avatar">👤</span>
-                <span id="current-player-name">Invité</span>
-            </button>
-
-            <h1 class="game-title">
-                <span class="title-line">Sauve la</span>
-                <span class="title-earth">Terre</span>
-            </h1>
-            <p class="subtitle">Tables de Multiplication</p>
-
-            <div class="menu-section">
-                <h2>Sélectionne les tables</h2>
-                <div class="tables-grid">
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="1" checked>
-                        <span>1</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="2" checked>
-                        <span>2</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="3" checked>
-                        <span>3</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="4" checked>
-                        <span>4</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="5" checked>
-                        <span>5</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="6">
-                        <span>6</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="7">
-                        <span>7</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="8">
-                        <span>8</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="9">
-                        <span>9</span>
-                    </label>
-                    <label class="table-checkbox">
-                        <input type="checkbox" value="10">
-                        <span>10</span>
-                    </label>
+            <!-- Header compact -->
+            <div class="menu-header">
+                <button id="open-player-panel" class="player-selector-btn">
+                    <span id="current-player-avatar">👤</span>
+                    <span id="current-player-name">Invité</span>
+                </button>
+                <div class="title-block">
+                    <h1 class="game-title">Sauve la <span class="title-earth">Terre</span></h1>
+                    <p class="subtitle" id="game-subtitle">Tables de Multiplication</p>
                 </div>
             </div>
 
-            <div class="menu-section">
-                <h2>Difficulté</h2>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn" data-difficulty="easy">
-                        <span class="diff-icon">🌟</span>
-                        <span class="diff-name">Facile</span>
-                    </button>
-                    <button class="difficulty-btn active" data-difficulty="medium">
-                        <span class="diff-icon">🌟🌟</span>
-                        <span class="diff-name">Moyen</span>
-                    </button>
-                    <button class="difficulty-btn" data-difficulty="hard">
-                        <span class="diff-icon">🌟🌟🌟</span>
-                        <span class="diff-name">Difficile</span>
-                    </button>
-                </div>
-            </div>
+            <!-- Grille principale à 2 colonnes -->
+            <div class="menu-grid">
+                <!-- Colonne gauche -->
+                <div class="menu-column">
+                    <div class="menu-section">
+                        <h2>Type d'opération</h2>
+                        <div class="operation-buttons">
+                            <button class="operation-btn active" data-operation="multiplication">×</button>
+                            <button class="operation-btn" data-operation="addition">+</button>
+                            <button class="operation-btn" data-operation="subtraction">−</button>
+                            <button class="operation-btn" data-operation="division">÷</button>
+                            <button class="operation-btn" data-operation="combined">±</button>
+                        </div>
+                    </div>
 
-            <div class="menu-section">
-                <h2>Mode de Jeu</h2>
-                <div class="gamemode-buttons">
-                    <button class="gamemode-btn active" data-mode="infinite">&#8734; Infini</button>
-                    <button class="gamemode-btn" data-mode="time">&#9201; Temps</button>
-                    <button class="gamemode-btn" data-mode="asteroids">&#9732; Asteroides</button>
+                    <div id="tables-section" class="menu-section">
+                        <h2>Tables</h2>
+                        <div class="tables-grid">
+                            <label class="table-checkbox"><input type="checkbox" value="1" checked><span>1</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="2" checked><span>2</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="3" checked><span>3</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="4" checked><span>4</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="5" checked><span>5</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="6"><span>6</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="7"><span>7</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="8"><span>8</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="9"><span>9</span></label>
+                            <label class="table-checkbox"><input type="checkbox" value="10"><span>10</span></label>
+                        </div>
+                    </div>
+
+                    <div id="operation-options" class="menu-section hidden">
+                        <h2>Configuration</h2>
+                        <div class="config-group">
+                            <div class="digit-options">
+                                <button class="digit-btn active" data-digits="1">1 chiffre</button>
+                                <button class="digit-btn" data-digits="2">2 chiffres</button>
+                            </div>
+                        </div>
+                        <div id="negative-option" class="config-group hidden">
+                            <label class="mode-checkbox compact">
+                                <input type="checkbox" id="allow-negatives">
+                                <span>Résultats négatifs</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="menu-section">
+                        <h2>Difficulté</h2>
+                        <div class="difficulty-buttons">
+                            <button class="difficulty-btn" data-difficulty="easy">🌟</button>
+                            <button class="difficulty-btn active" data-difficulty="medium">🌟🌟</button>
+                            <button class="difficulty-btn" data-difficulty="hard">🌟🌟🌟</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Options temps (cache par defaut) -->
-                <div id="time-options" class="mode-options hidden">
-                    <button class="option-btn" data-time="60">1 min</button>
-                    <button class="option-btn active" data-time="120">2 min</button>
-                    <button class="option-btn" data-time="180">3 min</button>
-                </div>
+                <!-- Colonne droite -->
+                <div class="menu-column">
+                    <div class="menu-section">
+                        <h2>Mode de Jeu</h2>
+                        <div class="gamemode-buttons">
+                            <button class="gamemode-btn active" data-mode="infinite">∞ Infini</button>
+                            <button class="gamemode-btn" data-mode="time">⏱ Temps</button>
+                            <button class="gamemode-btn" data-mode="asteroids">☄ Astéroïdes</button>
+                        </div>
+                        <div id="time-options" class="mode-options hidden">
+                            <button class="option-btn" data-time="60">1 min</button>
+                            <button class="option-btn active" data-time="120">2 min</button>
+                            <button class="option-btn" data-time="180">3 min</button>
+                        </div>
+                        <div id="asteroids-options" class="mode-options hidden">
+                            <button class="option-btn" data-count="10">10</button>
+                            <button class="option-btn active" data-count="20">20</button>
+                            <button class="option-btn" data-count="50">50</button>
+                        </div>
+                    </div>
 
-                <!-- Options asteroides (cache par defaut) -->
-                <div id="asteroids-options" class="mode-options hidden">
-                    <button class="option-btn" data-count="10">10</button>
-                    <button class="option-btn active" data-count="20">20</button>
-                    <button class="option-btn" data-count="50">50</button>
-                </div>
-            </div>
+                    <div class="menu-section">
+                        <h2>Options</h2>
+                        <div class="options-row">
+                            <div class="sound-controls">
+                                <button id="toggle-music" class="sound-btn active" title="Musique">
+                                    <svg viewBox="0 0 24 24" width="20" height="20">
+                                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    </svg>
+                                </button>
+                                <button id="toggle-sound" class="sound-btn active" title="Effets sonores">
+                                    <svg viewBox="0 0 24 24" width="20" height="20">
+                                        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <label class="mode-checkbox compact">
+                                <input type="checkbox" id="split-mode">
+                                <span>Séparation</span>
+                            </label>
+                        </div>
+                    </div>
 
-            <div class="menu-section">
-                <div class="sound-controls">
-                    <button id="toggle-music" class="sound-btn active" title="Musique">
-                        <svg viewBox="0 0 24 24" width="24" height="24">
-                            <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    <button id="start-game" class="play-btn">
+                        <span>JOUER</span>
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor" d="M8 5v14l11-7z"/>
                         </svg>
                     </button>
-                    <button id="toggle-sound" class="sound-btn active" title="Effets sonores">
-                        <svg viewBox="0 0 24 24" width="24" height="24">
-                            <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                        </svg>
-                    </button>
+
+                    <div class="menu-footer">
+                        <button id="leaderboard-btn" class="leaderboard-btn">🏆 Classement</button>
+                        <p class="high-score">Record: <span id="menu-high-score">0</span></p>
+                    </div>
                 </div>
-                <label class="mode-checkbox">
-                    <input type="checkbox" id="split-mode">
-                    <span>Mode Separation</span>
-                </label>
             </div>
-
-            <button id="start-game" class="play-btn">
-                <span>JOUER</span>
-                <svg viewBox="0 0 24 24" width="32" height="32">
-                    <path fill="currentColor" d="M8 5v14l11-7z"/>
-                </svg>
-            </button>
-
-            <button id="leaderboard-btn" class="leaderboard-btn">🏆 Classement</button>
-
-            <p class="high-score">Meilleur score: <span id="menu-high-score">0</span></p>
         </div>
     </div>
 
@@ -390,6 +387,7 @@
     </div>
 
     <script src="js/audio.js"></script>
+    <script src="js/question-generator.js"></script>
     <script src="js/asteroid.js"></script>
     <script src="js/powerup.js"></script>
     <script src="js/profile.js"></script>

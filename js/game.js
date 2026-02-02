@@ -9,6 +9,12 @@ class Game {
         // Configuration
         this.tables = [];
         this.difficulty = 'medium';
+        this.operationConfig = {
+            type: 'multiplication',
+            tables: [],
+            digitCount: 1,
+            allowNegatives: false
+        };
 
         // État du jeu
         this.isRunning = false;
@@ -197,10 +203,26 @@ class Game {
             this.gameMode = modeConfig.mode;
             this.remainingTime = modeConfig.time || 0;
             this.targetAsteroids = modeConfig.count || 0;
+
+            // Configurer l'opération
+            if (modeConfig.operation) {
+                this.operationConfig = {
+                    type: modeConfig.operation.type || 'multiplication',
+                    tables: modeConfig.operation.tables || this.tables,
+                    digitCount: modeConfig.operation.digitCount || 1,
+                    allowNegatives: modeConfig.operation.allowNegatives || false
+                };
+            }
         } else {
             this.gameMode = 'infinite';
             this.remainingTime = 0;
             this.targetAsteroids = 0;
+            this.operationConfig = {
+                type: 'multiplication',
+                tables: this.tables,
+                digitCount: 1,
+                allowNegatives: false
+            };
         }
 
         // Nettoyer le timer précédent
@@ -410,7 +432,7 @@ class Game {
             asteroid = new Asteroid(
                 this.canvas.width,
                 this.canvas.height,
-                this.tables,
+                this.operationConfig,
                 this.difficulty
             );
             attempts++;
@@ -751,7 +773,7 @@ class Game {
 
             // Mode separation : creer des fragments si l'asteroide peut se diviser
             if (this.splitMode && asteroid.canSplit) {
-                const fragments = asteroid.createFragments(this.tables, this.difficulty);
+                const fragments = asteroid.createFragments(this.operationConfig, this.difficulty);
                 fragments.forEach(fragment => this.asteroids.push(fragment));
             }
 
@@ -780,7 +802,7 @@ class Game {
         this.activePowerUp = new PowerUp(
             this.canvas.width,
             this.canvas.height,
-            this.tables,
+            this.operationConfig,
             this.difficulty,
             type
         );
