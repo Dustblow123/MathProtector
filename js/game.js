@@ -52,9 +52,20 @@ class Game {
         this.gameTimer = null;
         this.hasWon = false;
 
+        // Suivi des sessions et erreurs
+        this.currentSessionId = null;
+        this.questionStartTime = null;
+        this.sessionErrors = [];
+        this.isReviewMode = false;
+        this.reviewQuestions = [];
+        this.reviewIndex = 0;
+
         // Animation
         this.lastTime = 0;
         this.animationId = null;
+
+        // Lasers actifs (dessinés sur le canvas)
+        this.activeLasers = [];
 
         // Scientifique/Canon position
         this.scientist = {
@@ -173,6 +184,11 @@ class Game {
         this.tables = tables;
         this.difficulty = difficulty;
 
+        // Reset mode révision
+        this.isReviewMode = false;
+        this.reviewQuestions = [];
+        this.reviewIndex = 0;
+
         // Reset etat
         this.score = 0;
         this.lives = 3;
@@ -230,6 +246,18 @@ class Game {
             clearInterval(this.gameTimer);
             this.gameTimer = null;
         }
+
+        // Démarrer une session de suivi
+        const profile = profileManager.getActiveProfile();
+        if (profile) {
+            this.currentSessionId = profileManager.startSession(profile.id, {
+                mode: this.gameMode,
+                difficulty: this.difficulty,
+                operation: this.operationConfig
+            });
+        }
+        this.sessionErrors = [];
+        this.questionStartTime = Date.now();
 
         // Mise à jour UI
         ui.updateScore(0);
@@ -294,6 +322,16 @@ class Game {
 
         cancelAnimationFrame(this.animationId);
         audioManager.stopMusic();
+
+        // Terminer la session de suivi
+        const profile = profileManager.getActiveProfile();
+        if (profile && this.currentSessionId) {
+            profileManager.endSession(profile.id, this.currentSessionId, {
+                score: this.score,
+                maxCombo: this.maxCombo,
+                destroyed: this.asteroidsDestroyed
+            });
+        }
 
         // Statistiques de la partie
         const gameStats = {
@@ -367,7 +405,14 @@ class Game {
         const delay = this.spawnDelay[this.difficulty];
 
         if (!this.freezeActive && this.asteroids.length < maxAst && currentTime - this.lastSpawn > delay) {
-            this.spawnAsteroid();
+            if (this.isReviewMode) {
+                // En mode révision, utiliser les questions prédéfinies
+                if (this.reviewIndex < this.reviewQuestions.length) {
+                    this.spawnReviewAsteroid();
+                }
+            } else {
+                this.spawnAsteroid();
+            }
             this.lastSpawn = currentTime;
         }
 
@@ -384,6 +429,27 @@ class Game {
                     // Afficher la bonne reponse manquee
                     ui.showMissedAnswer(center.x, this.canvas.height - 150, asteroid.question, asteroid.answer);
                     audioManager.playExplosion();
+
+                    // Enregistrer comme erreur (non répondue)
+                    const profile = profileManager.getActiveProfile();
+                    if (profile) {
+                        const errorData = {
+                            question: asteroid.question,
+                            correctAnswer: asteroid.answer,
+                            givenAnswer: null, // Non répondu
+                            operationType: this.operationConfig.type,
+                            table: asteroid.table || null,
+                            responseTime: 0
+                        };
+
+                        profileManager.recordError(profile.id, errorData);
+
+                        if (this.currentSessionId) {
+                            profileManager.addSessionAnswer(profile.id, this.currentSessionId, errorData, false);
+                        }
+
+                        this.sessionErrors.push(errorData);
+                    }
 
                     this.loseLife();
                     this.asteroids.splice(i, 1);
@@ -455,6 +521,9 @@ class Game {
 
         // Scientifique
         this.drawScientist();
+
+        // Lasers actifs
+        this.drawLasers();
 
         // Asteroides
         this.asteroids.forEach(asteroid => asteroid.draw(ctx));
@@ -642,6 +711,101 @@ class Game {
     }
 
     /**
+     * Crée un laser sur le canvas
+     * @param {number} startX - Position X de départ
+     * @param {number} startY - Position Y de départ
+     * @param {number} endX - Position X de fin
+     * @param {number} endY - Position Y de fin
+     * @param {string} color - Couleur du laser (hex)
+     * @returns {number} - Durée du voyage en ms
+     */
+    createCanvasLaser(startX, startY, endX, endY, color) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const travelTime = Math.max(150, Math.min(400, length / 2));
+
+        this.activeLasers.push({
+            startX,
+            startY,
+            endX,
+            endY,
+            color,
+            startTime: Date.now(),
+            duration: travelTime,
+            length
+        });
+
+        return travelTime;
+    }
+
+    /**
+     * Dessine les lasers actifs sur le canvas
+     */
+    drawLasers() {
+        const ctx = this.ctx;
+        const now = Date.now();
+
+        // Filtrer et dessiner les lasers actifs
+        this.activeLasers = this.activeLasers.filter(laser => {
+            const elapsed = now - laser.startTime;
+            const progress = elapsed / laser.duration;
+
+            if (progress >= 1) {
+                return false; // Supprimer ce laser
+            }
+
+            // Calculer l'opacité (fade in puis fade out)
+            let opacity;
+            if (progress < 0.15) {
+                opacity = progress / 0.15; // Fade in
+            } else if (progress > 0.7) {
+                opacity = 1 - (progress - 0.7) / 0.3; // Fade out
+            } else {
+                opacity = 1;
+            }
+
+            // Convertir la couleur hex en RGB
+            const hexToRgb = (hex) => {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 79, g: 195, b: 247 };
+            };
+            const rgb = hexToRgb(laser.color);
+
+            ctx.save();
+
+            // Dessiner le laser (ligne épaisse avec glow)
+            ctx.beginPath();
+            ctx.moveTo(laser.startX, laser.startY);
+            ctx.lineTo(laser.endX, laser.endY);
+
+            // Glow externe
+            ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity * 0.3})`;
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Glow moyen
+            ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity * 0.5})`;
+            ctx.lineWidth = 12;
+            ctx.stroke();
+
+            // Coeur du laser
+            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.restore();
+
+            return true; // Garder ce laser
+        });
+    }
+
+    /**
      * Verifie la reponse du joueur
      * @param {number} answer - Reponse donnee
      */
@@ -668,7 +832,7 @@ class Game {
             this.handleCorrectAnswer(matchingAsteroid);
         } else if (this.asteroids.length > 0 || this.activePowerUp) {
             // Mauvaise reponse (aucun asteroide n'a cette reponse)
-            this.handleWrongAnswer();
+            this.handleWrongAnswer(answer);
         }
     }
 
@@ -716,12 +880,43 @@ class Game {
     handleCorrectAnswer(asteroid) {
         const center = asteroid.getCenter();
 
-        // Effet laser oriente vers l'asteroide - retourne le temps de voyage
-        const laserTravelTime = ui.createLaser(this.scientist.x, this.scientist.y - 70, center.x, center.y);
+        // Enregistrer la bonne réponse pour les statistiques
+        const profile = profileManager.getActiveProfile();
+        const responseTime = Date.now() - this.questionStartTime;
+
+        if (profile) {
+            const answerData = {
+                question: asteroid.question,
+                correctAnswer: asteroid.answer,
+                operationType: this.operationConfig.type,
+                table: asteroid.table || null,
+                responseTime: responseTime
+            };
+
+            profileManager.recordCorrectAnswer(profile.id, answerData);
+
+            if (this.currentSessionId) {
+                profileManager.addSessionAnswer(profile.id, this.currentSessionId, answerData, true);
+            }
+        }
+
+        // Réinitialiser le timer de question
+        this.questionStartTime = Date.now();
+
+        // Effet laser oriente vers l'asteroide
+        // Utiliser la couleur du profil actif
+        const laserColor = profile ? profile.accentColor : '#4fc3f7';
+
+        // Créer le laser sur le canvas (évite les problèmes de positionnement DOM)
+        const laserTravelTime = this.createCanvasLaser(this.scientist.x, this.scientist.y - 70, center.x, center.y, laserColor);
+
+        // Effets DOM (flash, particules)
+        ui.createLaser(this.scientist.x, this.scientist.y - 70, center.x, center.y, laserColor);
         audioManager.playLaser();
 
         // Marquer l'astéroïde comme "touché" pour le rendre visuellement différent
         asteroid.isHit = true;
+        asteroid.hitColor = laserColor;
 
         // L'explosion se déclenche quand le laser atteint la cible
         setTimeout(() => {
@@ -870,8 +1065,43 @@ class Game {
 
     /**
      * Gère une mauvaise réponse
+     * @param {number} givenAnswer - Réponse donnée par le joueur
      */
-    handleWrongAnswer() {
+    handleWrongAnswer(givenAnswer = null) {
+        // Enregistrer l'erreur si on a des astéroïdes
+        if (this.asteroids.length > 0 && givenAnswer !== null) {
+            const profile = profileManager.getActiveProfile();
+            const responseTime = Date.now() - this.questionStartTime;
+
+            // Trouver l'astéroïde le plus proche de la Terre (celui que le joueur visait probablement)
+            const closestAsteroid = this.asteroids.reduce((closest, current) =>
+                current.y > closest.y ? current : closest
+            );
+
+            if (profile && closestAsteroid) {
+                const errorData = {
+                    question: closestAsteroid.question,
+                    correctAnswer: closestAsteroid.answer,
+                    givenAnswer: givenAnswer,
+                    operationType: this.operationConfig.type,
+                    table: closestAsteroid.table || null,
+                    responseTime: responseTime
+                };
+
+                profileManager.recordError(profile.id, errorData);
+
+                if (this.currentSessionId) {
+                    profileManager.addSessionAnswer(profile.id, this.currentSessionId, errorData, false);
+                }
+
+                // Sauvegarder pour la révision de fin de partie
+                this.sessionErrors.push(errorData);
+            }
+        }
+
+        // Réinitialiser le timer de question
+        this.questionStartTime = Date.now();
+
         this.combo = 1;
         ui.updateCombo(1);
         ui.showError('Mauvaise réponse !');
@@ -918,6 +1148,16 @@ class Game {
         audioManager.stopMusic();
         audioManager.playGameOver();
 
+        // Terminer la session de suivi
+        const profile = profileManager.getActiveProfile();
+        if (profile && this.currentSessionId) {
+            profileManager.endSession(profile.id, this.currentSessionId, {
+                score: this.score,
+                maxCombo: this.maxCombo,
+                destroyed: this.asteroidsDestroyed
+            });
+        }
+
         // Statistiques de la partie
         const gameStats = {
             score: this.score,
@@ -948,12 +1188,13 @@ class Game {
         }
         ui.updateHighScore(profileHighScore > 0 ? profileHighScore : this.score);
 
-        // Afficher l'écran game over
+        // Afficher l'écran game over avec les erreurs pour révision
         ui.showGameOver({
             score: this.score,
             maxCombo: this.maxCombo,
             destroyed: this.asteroidsDestroyed,
-            isNewRecord: isNewRecord
+            isNewRecord: isNewRecord,
+            errors: this.sessionErrors
         });
     }
 
@@ -1023,6 +1264,115 @@ class Game {
      */
     saveHighScore(score) {
         localStorage.setItem('mathGameHighScore', score.toString());
+    }
+
+    /**
+     * Démarre le mode révision avec des questions spécifiques
+     * @param {Array} errors - Liste des erreurs à retravailler
+     */
+    async startReviewMode(errors) {
+        if (!errors || errors.length === 0) return;
+
+        // Initialiser l'audio au premier clic
+        await audioManager.init();
+
+        this.isReviewMode = true;
+        this.reviewQuestions = errors.map(e => ({
+            question: e.question,
+            answer: e.correctAnswer,
+            operationType: e.operationType,
+            table: e.table
+        }));
+        this.reviewIndex = 0;
+
+        // Configuration basique pour le mode révision
+        this.difficulty = 'medium';
+        this.tables = [1, 2, 3, 4, 5];
+
+        // Reset etat
+        this.score = 0;
+        this.lives = 3;
+        this.combo = 1;
+        this.maxCombo = 1;
+        this.asteroidsDestroyed = 0;
+        this.asteroids = [];
+        this.lastSpawn = 0;
+        this.isRunning = true;
+        this.isPaused = false;
+        this.hasWon = false;
+
+        // Reset powerups
+        this.activePowerUp = null;
+        this.storedPowerUp = null;
+        this.shieldActive = false;
+        this.freezeActive = false;
+        this.freezeEndTime = 0;
+        ui.updatePowerUpIcon(null);
+        ui.removeShieldEffect();
+
+        // Mode astéroïdes avec le nombre d'erreurs comme cible
+        this.gameMode = 'asteroids';
+        this.targetAsteroids = errors.length;
+
+        // Nettoyer le timer précédent
+        if (this.gameTimer) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+        }
+
+        // Session de suivi
+        const profile = profileManager.getActiveProfile();
+        if (profile) {
+            this.currentSessionId = profileManager.startSession(profile.id, {
+                mode: 'review',
+                difficulty: this.difficulty,
+                operation: { type: 'review' }
+            });
+        }
+        this.sessionErrors = [];
+        this.questionStartTime = Date.now();
+
+        // Mise à jour UI
+        ui.updateScore(0);
+        ui.updateCombo(1);
+        ui.resetLives();
+        ui.setupModeDisplay('asteroids', 0, errors.length);
+        ui.showScreen('game');
+
+        // Démarrer la musique
+        audioManager.startMusic();
+
+        // Lancer la boucle de jeu
+        this.lastTime = performance.now();
+        this.gameLoop(this.lastTime);
+    }
+
+    /**
+     * Spawn un astéroïde avec une question de révision
+     */
+    spawnReviewAsteroid() {
+        if (this.reviewIndex >= this.reviewQuestions.length) {
+            // Plus de questions de révision, terminer
+            return;
+        }
+
+        const reviewQ = this.reviewQuestions[this.reviewIndex];
+        this.reviewIndex++;
+
+        // Créer un astéroïde personnalisé avec la question de révision
+        const asteroid = new Asteroid(
+            this.canvas.width,
+            this.canvas.height,
+            this.operationConfig,
+            this.difficulty
+        );
+
+        // Remplacer la question par celle de la révision
+        asteroid.question = reviewQ.question;
+        asteroid.answer = reviewQ.answer;
+        asteroid.table = reviewQ.table;
+
+        this.asteroids.push(asteroid);
     }
 }
 

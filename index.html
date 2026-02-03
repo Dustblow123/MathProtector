@@ -164,6 +164,11 @@
                             <button class="operation-btn" data-operation="division">÷</button>
                             <button class="operation-btn" data-operation="combined">±</button>
                         </div>
+                        <div class="operation-buttons" style="margin-top: 0.3rem;">
+                            <button class="operation-btn" data-operation="fractions">½</button>
+                            <button class="operation-btn" data-operation="percentages">%</button>
+                            <button class="operation-btn" data-operation="powers">x²</button>
+                        </div>
                     </div>
 
                     <div id="tables-section" class="menu-section">
@@ -259,7 +264,11 @@
                     </button>
 
                     <div class="menu-footer">
-                        <button id="leaderboard-btn" class="leaderboard-btn">🏆 Classement</button>
+                        <div class="menu-extra-buttons">
+                            <button id="leaderboard-btn" class="leaderboard-btn">🏆 Classement</button>
+                            <button id="training-menu-btn" class="training-btn">🎯 Entraînement</button>
+                            <button id="stats-menu-btn" class="stats-btn">📊 Stats</button>
+                        </div>
                         <p class="high-score">Record: <span id="menu-high-score">0</span></p>
                     </div>
                 </div>
@@ -339,7 +348,27 @@
             </div>
             <div class="gameover-buttons">
                 <button id="retry-btn" class="play-btn">Rejouer</button>
+                <button id="gameover-review-btn" class="secondary-btn">Revoir mes erreurs</button>
                 <button id="menu-btn" class="secondary-btn">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran Révision -->
+    <div id="review-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="review-container">
+            <h2 class="review-title">Révision de la partie</h2>
+            <div class="review-stats">
+                <span>Score: <span id="review-score" class="review-score-value">0</span></span>
+                <span>Erreurs: <span id="review-error-count" class="review-error-value">0</span></span>
+            </div>
+            <div id="review-errors-list" class="review-errors-list">
+                <!-- Erreurs générées dynamiquement -->
+            </div>
+            <div class="review-actions">
+                <button id="review-replay-btn" class="play-btn">Rejouer ces questions</button>
+                <button id="review-menu-btn" class="secondary-btn">Menu</button>
             </div>
         </div>
     </div>
@@ -386,6 +415,68 @@
         </div>
     </div>
 
+    <!-- Écran Entraînement -->
+    <div id="training-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="training-container">
+            <h2 class="training-title">Mode Entraînement</h2>
+            <p class="training-subtitle">Tes points faibles détectés :</p>
+
+            <div id="weak-areas-list" class="weak-areas-list">
+                <!-- Généré dynamiquement -->
+            </div>
+
+            <div class="training-options">
+                <h3>Sélectionne ce que tu veux travailler :</h3>
+                <div id="training-checkboxes" class="training-checkboxes"></div>
+            </div>
+
+            <div class="training-count">
+                <span>Nombre de questions :</span>
+                <div class="count-buttons">
+                    <button class="count-btn" data-count="10">10</button>
+                    <button class="count-btn active" data-count="20">20</button>
+                    <button class="count-btn" data-count="50">50</button>
+                </div>
+            </div>
+
+            <div class="training-actions">
+                <button id="training-start-btn" class="play-btn">Commencer</button>
+                <button id="training-back-btn" class="secondary-btn">Retour</button>
+                <button id="training-reset-btn" class="danger-btn">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran Statistiques -->
+    <div id="statistics-screen" class="screen">
+        <div class="stars-bg"></div>
+        <div class="stats-container">
+            <h2 class="stats-title">Statistiques</h2>
+
+            <div class="stats-tabs">
+                <button class="stats-tab active" data-tab="tables">Par Table</button>
+                <button class="stats-tab" data-tab="operations">Par Opération</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="stats-chart"></canvas>
+            </div>
+
+            <div class="frequent-errors">
+                <h3>Erreurs fréquentes</h3>
+                <div id="frequent-errors-list" class="frequent-errors-list"></div>
+            </div>
+
+            <div class="stats-actions">
+                <button id="stats-back-btn" class="secondary-btn">Retour</button>
+                <button id="stats-reset-btn" class="danger-btn">Réinitialiser les stats</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js pour les statistiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/question-generator.js"></script>
     <script src="js/asteroid.js"></script>

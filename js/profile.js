@@ -9,6 +9,11 @@ class ProfileManager {
         this.LEADERBOARD_KEY = 'mathGameLeaderboard';
         this.OLD_HIGHSCORE_KEY = 'mathGameHighScore';
 
+        // Nouvelles clés pour le suivi des erreurs et statistiques
+        this.ERROR_HISTORY_KEY = 'mathGameErrorHistory';
+        this.SESSION_HISTORY_KEY = 'mathGameSessionHistory';
+        this.AGGREGATED_STATS_KEY = 'mathGameAggregatedStats';
+
         // Avatars prédéfinis
         this.predefinedAvatars = [
             { id: 'astronaut', emoji: '🧑‍🚀', name: 'Astronaute' },
@@ -412,6 +417,497 @@ class ProfileManager {
                 ? Math.round(profile.stats.totalAsteroidsDestroyed / profile.stats.totalGamesPlayed)
                 : 0
         };
+    }
+
+    // ====================== SUIVI DES ERREURS ET STATISTIQUES ======================
+
+    /**
+     * Enregistre une erreur
+     * @param {string} profileId - ID du profil
+     * @param {Object} errorData - Données de l'erreur
+     */
+    recordError(profileId, errorData) {
+        if (!profileId) return;
+
+        const error = {
+            timestamp: Date.now(),
+            question: errorData.question,
+            correctAnswer: errorData.correctAnswer,
+            givenAnswer: errorData.givenAnswer,
+            operationType: errorData.operationType,
+            table: errorData.table || null,
+            responseTime: errorData.responseTime || 0
+        };
+
+        // Sauvegarder dans l'historique des erreurs
+        let errorHistory = this.getErrorHistoryData();
+        if (!errorHistory[profileId]) {
+            errorHistory[profileId] = [];
+        }
+        errorHistory[profileId].push(error);
+
+        // Garder seulement les 500 dernières erreurs par profil
+        if (errorHistory[profileId].length > 500) {
+            errorHistory[profileId] = errorHistory[profileId].slice(-500);
+        }
+
+        this.saveErrorHistory(errorHistory);
+
+        // Mettre à jour les stats agrégées
+        this.updateAggregatedStats(profileId, errorData, false);
+    }
+
+    /**
+     * Enregistre une bonne réponse
+     * @param {string} profileId - ID du profil
+     * @param {Object} answerData - Données de la réponse
+     */
+    recordCorrectAnswer(profileId, answerData) {
+        if (!profileId) return;
+
+        // Mettre à jour les stats agrégées
+        this.updateAggregatedStats(profileId, answerData, true);
+    }
+
+    /**
+     * Récupère les données brutes de l'historique des erreurs
+     * @returns {Object}
+     */
+    getErrorHistoryData() {
+        try {
+            const data = localStorage.getItem(this.ERROR_HISTORY_KEY);
+            return data ? JSON.parse(data) : {};
+        } catch (e) {
+            console.error('Erreur lors du chargement de l\'historique des erreurs:', e);
+            return {};
+        }
+    }
+
+    /**
+     * Sauvegarde l'historique des erreurs
+     * @param {Object} errorHistory
+     */
+    saveErrorHistory(errorHistory) {
+        try {
+            localStorage.setItem(this.ERROR_HISTORY_KEY, JSON.stringify(errorHistory));
+        } catch (e) {
+            console.error('Erreur lors de la sauvegarde de l\'historique des erreurs:', e);
+        }
+    }
+
+    /**
+     * Récupère l'historique des erreurs d'un profil
+     * @param {string} profileId - ID du profil
+     * @param {number} limit - Nombre max d'erreurs à retourner (0 = toutes)
+     * @returns {Array}
+     */
+    getErrorHistory(profileId, limit = 0) {
+        const errorHistory = this.getErrorHistoryData();
+        const errors = errorHistory[profileId] || [];
+
+        if (limit > 0) {
+            return errors.slice(-limit);
+        }
+        return errors;
+    }
+
+    /**
+     * Récupère les statistiques agrégées d'un profil
+     * @param {string} profileId - ID du profil
+     * @returns {Object}
+     */
+    getAggregatedStats(profileId) {
+        try {
+            const data = localStorage.getItem(this.AGGREGATED_STATS_KEY);
+            const allStats = data ? JSON.parse(data) : {};
+            return allStats[profileId] || this.createEmptyAggregatedStats();
+        } catch (e) {
+            console.error('Erreur lors du chargement des stats agrégées:', e);
+            return this.createEmptyAggregatedStats();
+        }
+    }
+
+    /**
+     * Crée un objet de stats agrégées vide
+     * @returns {Object}
+     */
+    createEmptyAggregatedStats() {
+        return {
+            tableStats: {},
+            operationStats: {},
+            frequentErrors: [],
+            totalAnswers: 0,
+            totalCorrect: 0,
+            totalWrong: 0
+        };
+    }
+
+    /**
+     * Met à jour les statistiques agrégées
+     * @param {string} profileId - ID du profil
+     * @param {Object} answerData - Données de la réponse
+     * @param {boolean} isCorrect - Si la réponse est correcte
+     */
+    updateAggregatedStats(profileId, answerData, isCorrect) {
+        if (!profileId) return;
+
+        try {
+            const data = localStorage.getItem(this.AGGREGATED_STATS_KEY);
+            const allStats = data ? JSON.parse(data) : {};
+
+            if (!allStats[profileId]) {
+                allStats[profileId] = this.createEmptyAggregatedStats();
+            }
+
+            const stats = allStats[profileId];
+
+            // Compteurs globaux
+            stats.totalAnswers++;
+            if (isCorrect) {
+                stats.totalCorrect++;
+            } else {
+                stats.totalWrong++;
+            }
+
+            // Stats par table (pour multiplication/division)
+            if (answerData.table) {
+                if (!stats.tableStats[answerData.table]) {
+                    stats.tableStats[answerData.table] = { correct: 0, wrong: 0, avgTime: 0, totalTime: 0, count: 0 };
+                }
+                const tableData = stats.tableStats[answerData.table];
+                if (isCorrect) {
+                    tableData.correct++;
+                } else {
+                    tableData.wrong++;
+                }
+                if (answerData.responseTime) {
+                    tableData.totalTime += answerData.responseTime;
+                    tableData.count++;
+                    tableData.avgTime = Math.round(tableData.totalTime / tableData.count);
+                }
+            }
+
+            // Stats par opération
+            if (answerData.operationType) {
+                if (!stats.operationStats[answerData.operationType]) {
+                    stats.operationStats[answerData.operationType] = { correct: 0, wrong: 0, avgTime: 0, totalTime: 0, count: 0 };
+                }
+                const opData = stats.operationStats[answerData.operationType];
+                if (isCorrect) {
+                    opData.correct++;
+                } else {
+                    opData.wrong++;
+                }
+                if (answerData.responseTime) {
+                    opData.totalTime += answerData.responseTime;
+                    opData.count++;
+                    opData.avgTime = Math.round(opData.totalTime / opData.count);
+                }
+            }
+
+            // Mise à jour des erreurs fréquentes (si erreur)
+            if (!isCorrect && answerData.question) {
+                this.updateFrequentErrors(stats, answerData.question);
+            }
+
+            localStorage.setItem(this.AGGREGATED_STATS_KEY, JSON.stringify(allStats));
+        } catch (e) {
+            console.error('Erreur lors de la mise à jour des stats agrégées:', e);
+        }
+    }
+
+    /**
+     * Met à jour la liste des erreurs fréquentes
+     * @param {Object} stats - Stats agrégées
+     * @param {string} question - Question ayant généré l'erreur
+     */
+    updateFrequentErrors(stats, question) {
+        const existing = stats.frequentErrors.find(e => e.question === question);
+        if (existing) {
+            existing.count++;
+        } else {
+            stats.frequentErrors.push({ question: question, count: 1 });
+        }
+
+        // Trier par nombre d'erreurs décroissant et garder les 20 plus fréquentes
+        stats.frequentErrors.sort((a, b) => b.count - a.count);
+        if (stats.frequentErrors.length > 20) {
+            stats.frequentErrors = stats.frequentErrors.slice(0, 20);
+        }
+    }
+
+    /**
+     * Récupère les points faibles d'un profil (tables/opérations avec < 70% de réussite)
+     * @param {string} profileId - ID du profil
+     * @returns {Array}
+     */
+    getWeakAreas(profileId) {
+        const stats = this.getAggregatedStats(profileId);
+        const weakAreas = [];
+
+        // Analyser les tables (multiplication/division)
+        for (let table = 1; table <= 10; table++) {
+            const tableData = stats.tableStats[table];
+            if (tableData && tableData.correct + tableData.wrong >= 10) {
+                const successRate = tableData.correct / (tableData.correct + tableData.wrong);
+                if (successRate < 0.7) {
+                    weakAreas.push({
+                        type: 'table',
+                        value: table,
+                        successRate: Math.round(successRate * 100),
+                        label: `Table de ${table}`,
+                        correct: tableData.correct,
+                        wrong: tableData.wrong
+                    });
+                }
+            }
+        }
+
+        // Analyser les opérations
+        const operationLabels = {
+            multiplication: 'Multiplications',
+            addition: 'Additions',
+            subtraction: 'Soustractions',
+            division: 'Divisions',
+            fractions: 'Fractions',
+            percentages: 'Pourcentages',
+            powers: 'Puissances'
+        };
+
+        for (const [op, data] of Object.entries(stats.operationStats)) {
+            if (data.correct + data.wrong >= 10) {
+                const successRate = data.correct / (data.correct + data.wrong);
+                if (successRate < 0.7) {
+                    weakAreas.push({
+                        type: 'operation',
+                        value: op,
+                        successRate: Math.round(successRate * 100),
+                        label: operationLabels[op] || op,
+                        correct: data.correct,
+                        wrong: data.wrong
+                    });
+                }
+            }
+        }
+
+        return weakAreas.sort((a, b) => a.successRate - b.successRate);
+    }
+
+    /**
+     * Démarre une nouvelle session de jeu
+     * @param {string} profileId - ID du profil
+     * @param {Object} config - Configuration de la session
+     * @returns {string} - ID de la session
+     */
+    startSession(profileId, config) {
+        const sessionId = this.generateUUID();
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+
+            if (!sessions[profileId]) {
+                sessions[profileId] = [];
+            }
+
+            sessions[profileId].push({
+                id: sessionId,
+                startTime: Date.now(),
+                config: config,
+                errors: [],
+                answers: [],
+                endTime: null,
+                score: 0,
+                completed: false
+            });
+
+            // Garder seulement les 50 dernières sessions
+            if (sessions[profileId].length > 50) {
+                sessions[profileId] = sessions[profileId].slice(-50);
+            }
+
+            localStorage.setItem(this.SESSION_HISTORY_KEY, JSON.stringify(sessions));
+        } catch (e) {
+            console.error('Erreur lors du démarrage de session:', e);
+        }
+
+        return sessionId;
+    }
+
+    /**
+     * Ajoute une réponse à la session courante
+     * @param {string} profileId - ID du profil
+     * @param {string} sessionId - ID de la session
+     * @param {Object} answerData - Données de la réponse
+     * @param {boolean} isCorrect - Si la réponse est correcte
+     */
+    addSessionAnswer(profileId, sessionId, answerData, isCorrect) {
+        if (!profileId || !sessionId) return;
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+
+            if (!sessions[profileId]) return;
+
+            const session = sessions[profileId].find(s => s.id === sessionId);
+            if (!session) return;
+
+            session.answers.push({
+                ...answerData,
+                isCorrect: isCorrect,
+                timestamp: Date.now()
+            });
+
+            if (!isCorrect) {
+                session.errors.push({
+                    question: answerData.question,
+                    correctAnswer: answerData.correctAnswer,
+                    givenAnswer: answerData.givenAnswer,
+                    operationType: answerData.operationType,
+                    table: answerData.table
+                });
+            }
+
+            localStorage.setItem(this.SESSION_HISTORY_KEY, JSON.stringify(sessions));
+        } catch (e) {
+            console.error('Erreur lors de l\'ajout de réponse à la session:', e);
+        }
+    }
+
+    /**
+     * Termine une session de jeu
+     * @param {string} profileId - ID du profil
+     * @param {string} sessionId - ID de la session
+     * @param {Object} results - Résultats de la session
+     */
+    endSession(profileId, sessionId, results) {
+        if (!profileId || !sessionId) return;
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+
+            if (!sessions[profileId]) return;
+
+            const session = sessions[profileId].find(s => s.id === sessionId);
+            if (!session) return;
+
+            session.endTime = Date.now();
+            session.score = results.score || 0;
+            session.completed = true;
+
+            localStorage.setItem(this.SESSION_HISTORY_KEY, JSON.stringify(sessions));
+        } catch (e) {
+            console.error('Erreur lors de la fin de session:', e);
+        }
+    }
+
+    /**
+     * Récupère les erreurs d'une session
+     * @param {string} profileId - ID du profil
+     * @param {string} sessionId - ID de la session
+     * @returns {Array}
+     */
+    getSessionErrors(profileId, sessionId) {
+        if (!profileId || !sessionId) return [];
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+
+            if (!sessions[profileId]) return [];
+
+            const session = sessions[profileId].find(s => s.id === sessionId);
+            return session ? session.errors : [];
+        } catch (e) {
+            console.error('Erreur lors de la récupération des erreurs de session:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Récupère la dernière session d'un profil
+     * @param {string} profileId - ID du profil
+     * @returns {Object|null}
+     */
+    getLastSession(profileId) {
+        if (!profileId) return null;
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+
+            if (!sessions[profileId] || sessions[profileId].length === 0) return null;
+
+            return sessions[profileId][sessions[profileId].length - 1];
+        } catch (e) {
+            console.error('Erreur lors de la récupération de la dernière session:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Réinitialise les statistiques agrégées d'un profil
+     * @param {string} profileId - ID du profil
+     */
+    resetAggregatedStats(profileId) {
+        if (!profileId) return;
+
+        try {
+            const data = localStorage.getItem(this.AGGREGATED_STATS_KEY);
+            const allStats = data ? JSON.parse(data) : {};
+
+            // Réinitialiser les stats de ce profil
+            allStats[profileId] = this.createEmptyAggregatedStats();
+
+            localStorage.setItem(this.AGGREGATED_STATS_KEY, JSON.stringify(allStats));
+        } catch (e) {
+            console.error('Erreur lors de la réinitialisation des stats:', e);
+        }
+    }
+
+    /**
+     * Réinitialise l'historique des erreurs d'un profil
+     * @param {string} profileId - ID du profil
+     */
+    resetErrorHistory(profileId) {
+        if (!profileId) return;
+
+        try {
+            const errorHistory = this.getErrorHistoryData();
+            errorHistory[profileId] = [];
+            this.saveErrorHistory(errorHistory);
+        } catch (e) {
+            console.error('Erreur lors de la réinitialisation de l\'historique:', e);
+        }
+    }
+
+    /**
+     * Réinitialise l'historique des sessions d'un profil
+     * @param {string} profileId - ID du profil
+     */
+    resetSessionHistory(profileId) {
+        if (!profileId) return;
+
+        try {
+            const data = localStorage.getItem(this.SESSION_HISTORY_KEY);
+            const sessions = data ? JSON.parse(data) : {};
+            sessions[profileId] = [];
+            localStorage.setItem(this.SESSION_HISTORY_KEY, JSON.stringify(sessions));
+        } catch (e) {
+            console.error('Erreur lors de la réinitialisation des sessions:', e);
+        }
+    }
+
+    /**
+     * Réinitialise toutes les données d'entraînement d'un profil
+     * @param {string} profileId - ID du profil
+     */
+    resetAllTrainingData(profileId) {
+        this.resetAggregatedStats(profileId);
+        this.resetErrorHistory(profileId);
+        this.resetSessionHistory(profileId);
     }
 }
 

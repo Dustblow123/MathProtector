@@ -25,6 +25,7 @@ class PowerUp {
         this.question = q.question;
         this.answer = q.answer;
         this.operator = q.operator;
+        this.table = q.table || null;
 
         // Taille et position
         this.size = 45;
@@ -32,12 +33,15 @@ class PowerUp {
         this.y = -this.size;
 
         // Vitesse (un peu plus lent que les asteroides)
+        // Normalisée par rapport à une hauteur de référence de 1080px
+        const REFERENCE_HEIGHT = 1080;
+        const heightRatio = canvasHeight / REFERENCE_HEIGHT;
         const speeds = {
-            easy: 0.6,
-            medium: 1.0,
-            hard: 1.8
+            easy: 0.5,
+            medium: 0.85,
+            hard: 1.5
         };
-        this.baseSpeed = speeds[difficulty] || speeds.medium;
+        this.baseSpeed = (speeds[difficulty] || speeds.medium) * heightRatio;
 
         // Direction vers la Terre
         this.targetX = canvasWidth / 2;

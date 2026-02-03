@@ -98,6 +98,41 @@ class UIManager {
         this.victoryRetryBtn = document.getElementById('victory-retry-btn');
         this.victoryMenuBtn = document.getElementById('victory-menu-btn');
 
+        // Éléments révision
+        this.reviewScreen = document.getElementById('review-screen');
+        this.reviewScore = document.getElementById('review-score');
+        this.reviewErrorCount = document.getElementById('review-error-count');
+        this.reviewErrorsList = document.getElementById('review-errors-list');
+        this.reviewReplayBtn = document.getElementById('review-replay-btn');
+        this.reviewMenuBtn = document.getElementById('review-menu-btn');
+        this.gameoverReviewBtn = document.getElementById('gameover-review-btn');
+
+        // Éléments entraînement
+        this.trainingScreen = document.getElementById('training-screen');
+        this.weakAreasList = document.getElementById('weak-areas-list');
+        this.trainingCheckboxes = document.getElementById('training-checkboxes');
+        this.trainingStartBtn = document.getElementById('training-start-btn');
+        this.trainingBackBtn = document.getElementById('training-back-btn');
+        this.trainingMenuBtn = document.getElementById('training-menu-btn');
+        this.selectedTrainingCount = 20;
+        this.selectedWeakAreas = [];
+
+        // Éléments statistiques
+        this.statisticsScreen = document.getElementById('statistics-screen');
+        this.statsChartCanvas = document.getElementById('stats-chart');
+        this.statsTabs = document.querySelectorAll('.stats-tab');
+        this.frequentErrorsList = document.getElementById('frequent-errors-list');
+        this.statsBackBtn = document.getElementById('stats-back-btn');
+        this.statsMenuBtn = document.getElementById('stats-menu-btn');
+        this.statsResetBtn = document.getElementById('stats-reset-btn');
+        this.statsChart = null;
+
+        // Bouton reset entraînement
+        this.trainingResetBtn = document.getElementById('training-reset-btn');
+
+        // Erreurs de la dernière partie (pour révision)
+        this.lastGameErrors = [];
+
         // Éléments mode de jeu
         this.gamemodeBtns = document.querySelectorAll('.gamemode-btn');
         this.timeOptions = document.getElementById('time-options');
@@ -302,8 +337,124 @@ class UIManager {
         // Initialiser les événements profils
         this.initProfileEvents();
 
+        // Initialiser les événements des nouvelles fonctionnalités
+        this.initReviewEvents(callbacks);
+        this.initTrainingEvents(callbacks);
+        this.initStatisticsEvents();
+
         // Afficher le profil actif
         this.updateCurrentPlayerDisplay();
+    }
+
+    /**
+     * Initialise les événements de l'écran de révision
+     */
+    initReviewEvents(callbacks) {
+        // Bouton révision sur l'écran game over
+        if (this.gameoverReviewBtn) {
+            this.gameoverReviewBtn.addEventListener('click', () => {
+                this.showReviewScreen();
+            });
+        }
+
+        // Bouton rejouer les questions
+        if (this.reviewReplayBtn) {
+            this.reviewReplayBtn.addEventListener('click', () => {
+                if (this.lastGameErrors.length > 0) {
+                    // Lancer le mode révision avec les erreurs
+                    window.game.startReviewMode(this.lastGameErrors);
+                }
+            });
+        }
+
+        // Bouton retour menu
+        if (this.reviewMenuBtn) {
+            this.reviewMenuBtn.addEventListener('click', () => {
+                callbacks.onQuit();
+            });
+        }
+    }
+
+    /**
+     * Initialise les événements de l'écran d'entraînement
+     */
+    initTrainingEvents(callbacks) {
+        // Bouton menu entraînement
+        if (this.trainingMenuBtn) {
+            this.trainingMenuBtn.addEventListener('click', () => {
+                this.showTrainingScreen();
+            });
+        }
+
+        // Bouton retour
+        if (this.trainingBackBtn) {
+            this.trainingBackBtn.addEventListener('click', () => {
+                this.showScreen('menu');
+            });
+        }
+
+        // Boutons de comptage
+        const countBtns = document.querySelectorAll('.count-btn');
+        countBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                countBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedTrainingCount = parseInt(btn.dataset.count);
+            });
+        });
+
+        // Bouton démarrer entraînement
+        if (this.trainingStartBtn) {
+            this.trainingStartBtn.addEventListener('click', () => {
+                this.startTrainingMode(callbacks);
+            });
+        }
+
+        // Bouton réinitialiser entraînement
+        if (this.trainingResetBtn) {
+            this.trainingResetBtn.addEventListener('click', () => {
+                this.resetTrainingData();
+            });
+        }
+    }
+
+    /**
+     * Initialise les événements de l'écran de statistiques
+     */
+    initStatisticsEvents() {
+        // Bouton menu stats
+        if (this.statsMenuBtn) {
+            this.statsMenuBtn.addEventListener('click', () => {
+                this.showStatisticsScreen();
+            });
+        }
+
+        // Bouton retour
+        if (this.statsBackBtn) {
+            this.statsBackBtn.addEventListener('click', () => {
+                this.showScreen('menu');
+            });
+        }
+
+        // Onglets statistiques
+        this.statsTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.statsTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const profile = profileManager.getActiveProfile();
+                if (profile) {
+                    const stats = profileManager.getAggregatedStats(profile.id);
+                    this.renderStatsChart(stats, tab.dataset.tab);
+                }
+            });
+        });
+
+        // Bouton réinitialiser statistiques
+        if (this.statsResetBtn) {
+            this.statsResetBtn.addEventListener('click', () => {
+                this.resetStatistics();
+            });
+        }
     }
 
     /**
@@ -831,6 +982,7 @@ class UIManager {
         const needsTables = ['multiplication', 'division'].includes(this.selectedOperation);
         const needsDigitConfig = ['addition', 'subtraction', 'combined'].includes(this.selectedOperation);
         const hasSub = ['subtraction', 'combined'].includes(this.selectedOperation);
+        const noConfig = ['fractions', 'percentages', 'powers'].includes(this.selectedOperation);
 
         // Afficher/masquer la section des tables
         if (this.tablesSection) {
@@ -839,12 +991,12 @@ class UIManager {
 
         // Afficher/masquer les options de configuration
         if (this.operationOptions) {
-            this.operationOptions.classList.toggle('hidden', !needsDigitConfig);
+            this.operationOptions.classList.toggle('hidden', !needsDigitConfig || noConfig);
         }
 
         // Afficher/masquer l'option des résultats négatifs
         if (this.negativeOption) {
-            this.negativeOption.classList.toggle('hidden', !hasSub);
+            this.negativeOption.classList.toggle('hidden', !hasSub || noConfig);
         }
 
         // Mise à jour du sous-titre
@@ -853,7 +1005,10 @@ class UIManager {
             addition: 'Additions',
             subtraction: 'Soustractions',
             division: 'Divisions',
-            combined: 'Calcul Mental'
+            combined: 'Calcul Mental',
+            fractions: 'Fractions',
+            percentages: 'Pourcentages',
+            powers: 'Puissances'
         };
 
         if (this.gameSubtitle) {
@@ -891,7 +1046,7 @@ class UIManager {
 
     /**
      * Affiche un écran
-     * @param {string} screen - 'menu', 'game', 'gameover', 'pause', 'victory', 'leaderboard'
+     * @param {string} screen - 'menu', 'game', 'gameover', 'pause', 'victory', 'leaderboard', 'review', 'training', 'statistics'
      */
     showScreen(screen) {
         this.menuScreen.classList.remove('active');
@@ -903,6 +1058,15 @@ class UIManager {
         }
         if (this.leaderboardScreen) {
             this.leaderboardScreen.classList.remove('active');
+        }
+        if (this.reviewScreen) {
+            this.reviewScreen.classList.remove('active');
+        }
+        if (this.trainingScreen) {
+            this.trainingScreen.classList.remove('active');
+        }
+        if (this.statisticsScreen) {
+            this.statisticsScreen.classList.remove('active');
         }
 
         switch (screen) {
@@ -927,6 +1091,21 @@ class UIManager {
             case 'leaderboard':
                 if (this.leaderboardScreen) {
                     this.leaderboardScreen.classList.add('active');
+                }
+                break;
+            case 'review':
+                if (this.reviewScreen) {
+                    this.reviewScreen.classList.add('active');
+                }
+                break;
+            case 'training':
+                if (this.trainingScreen) {
+                    this.trainingScreen.classList.add('active');
+                }
+                break;
+            case 'statistics':
+                if (this.statisticsScreen) {
+                    this.statisticsScreen.classList.add('active');
                 }
                 break;
         }
@@ -1005,6 +1184,19 @@ class UIManager {
             newRecordEl.classList.remove('hidden');
         } else {
             newRecordEl.classList.add('hidden');
+        }
+
+        // Sauvegarder les erreurs pour la révision
+        this.lastGameErrors = stats.errors || [];
+        this.lastGameScore = stats.score;
+
+        // Afficher/masquer le bouton de révision selon s'il y a des erreurs
+        if (this.gameoverReviewBtn) {
+            if (this.lastGameErrors.length > 0) {
+                this.gameoverReviewBtn.classList.remove('hidden');
+            } else {
+                this.gameoverReviewBtn.classList.add('hidden');
+            }
         }
 
         this.showScreen('gameover');
@@ -1153,9 +1345,10 @@ class UIManager {
      * @param {number} startY - Position Y de départ
      * @param {number} endX - Position X de fin (cible)
      * @param {number} endY - Position Y de fin (cible)
+     * @param {string} color - Couleur du laser (hex)
      * @returns {number} - Durée du voyage en ms pour synchroniser l'explosion
      */
-    createLaser(startX, startY, endX, endY) {
+    createLaser(startX, startY, endX, endY, color = '#4fc3f7') {
         // Calculer la longueur et l'angle du laser
         const dx = endX - startX;
         const dy = endY - startY;
@@ -1165,31 +1358,46 @@ class UIManager {
         // Calculer le temps de voyage basé sur la distance (vitesse: ~2000px/s)
         const travelTime = Math.max(150, Math.min(400, length / 2));
 
+        // Convertir la couleur hex en RGB pour les effets
+        const hexToRgb = (hex) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 79, g: 195, b: 247 };
+        };
+        const rgb = hexToRgb(color);
+
         // 1. Flash de bouche (muzzle flash) au niveau du canon
         const muzzleFlash = document.createElement('div');
         muzzleFlash.className = 'laser-muzzle-flash';
         muzzleFlash.style.left = startX + 'px';
         muzzleFlash.style.top = startY + 'px';
+        muzzleFlash.style.setProperty('--laser-color', color);
+        muzzleFlash.style.setProperty('--laser-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
         this.gameScreen.appendChild(muzzleFlash);
 
         setTimeout(() => muzzleFlash.remove(), 200);
 
-        // 2. Faisceau laser principal
-        const laser = document.createElement('div');
-        laser.className = 'laser-beam shooting';
-        laser.style.setProperty('--travel-time', travelTime + 'ms');
-        laser.style.left = startX + 'px';
-        laser.style.top = startY + 'px';
-        laser.style.height = length + 'px';
-        laser.style.transform = `translateX(-50%) rotate(${angle}rad)`;
-        laser.style.transformOrigin = 'top center';
+        // 2. Faisceau laser principal - dessiné sur le canvas
+        // On ne crée plus d'élément DOM, le laser sera dessiné par game.js
+        const laser = null;
 
-        this.gameScreen.appendChild(laser);
-
-        // 3. Tête lumineuse qui voyage vers la cible
+        // 3. Tête lumineuse qui voyage vers la cible (DÉSACTIVÉE POUR TEST)
+        let laserHead = null;
+        /*
         const laserHead = document.createElement('div');
         laserHead.className = 'laser-head';
         laserHead.style.setProperty('--travel-time', travelTime + 'ms');
+        laserHead.style.setProperty('--laser-color', color);
+        laserHead.style.setProperty('--laser-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+
+        // Définir la position initiale AVANT d'ajouter au DOM
+        laserHead.style.left = startX + 'px';
+        laserHead.style.top = startY + 'px';
+
+        this.gameScreen.appendChild(laserHead);
 
         // Animer la position de la tête du laser
         const startTime = performance.now();
@@ -1209,8 +1417,8 @@ class UIManager {
             }
         };
 
-        this.gameScreen.appendChild(laserHead);
         requestAnimationFrame(animateHead);
+        */
 
         // 4. Particules le long du trajet
         const particleCount = Math.floor(length / 50);
@@ -1218,6 +1426,8 @@ class UIManager {
             setTimeout(() => {
                 const particle = document.createElement('div');
                 particle.className = 'laser-particle';
+                particle.style.setProperty('--laser-color', color);
+                particle.style.setProperty('--laser-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
 
                 const progress = (i + 1) / (particleCount + 1);
                 const px = startX + dx * progress;
@@ -1240,8 +1450,8 @@ class UIManager {
 
         // Nettoyer les éléments après l'animation
         setTimeout(() => {
-            laser.remove();
-            laserHead.remove();
+            if (laser) laser.remove();
+            if (laserHead) laserHead.remove();
         }, travelTime + 100);
 
         return travelTime;
@@ -1686,6 +1896,350 @@ class UIManager {
         setTimeout(() => {
             message.remove();
         }, 1500);
+    }
+
+    // ====================== ÉCRAN DE RÉVISION ======================
+
+    /**
+     * Affiche l'écran de révision des erreurs
+     */
+    showReviewScreen() {
+        if (this.reviewScore) {
+            this.reviewScore.textContent = this.lastGameScore || 0;
+        }
+        if (this.reviewErrorCount) {
+            this.reviewErrorCount.textContent = this.lastGameErrors.length;
+        }
+
+        this.renderReviewErrors(this.lastGameErrors);
+        this.showScreen('review');
+    }
+
+    /**
+     * Affiche les erreurs dans l'écran de révision
+     * @param {Array} errors - Liste des erreurs
+     */
+    renderReviewErrors(errors) {
+        if (!this.reviewErrorsList) return;
+
+        if (errors.length === 0) {
+            this.reviewErrorsList.innerHTML = '<p class="no-errors">Aucune erreur ! Bravo !</p>';
+            if (this.reviewReplayBtn) {
+                this.reviewReplayBtn.classList.add('hidden');
+            }
+            return;
+        }
+
+        if (this.reviewReplayBtn) {
+            this.reviewReplayBtn.classList.remove('hidden');
+        }
+
+        this.reviewErrorsList.innerHTML = errors.map(e => `
+            <div class="review-error-card">
+                <div class="review-question">${e.question}</div>
+                <div class="review-answers">
+                    <span class="wrong">Ta réponse: ${e.givenAnswer !== null ? e.givenAnswer : 'Pas répondu'}</span>
+                    <span class="correct">Correct: ${e.correctAnswer}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ====================== ÉCRAN D'ENTRAÎNEMENT ======================
+
+    /**
+     * Affiche l'écran d'entraînement
+     */
+    showTrainingScreen() {
+        const profile = profileManager.getActiveProfile();
+
+        if (!profile) {
+            this.showError('Crée un profil pour accéder à l\'entraînement');
+            return;
+        }
+
+        const weakAreas = profileManager.getWeakAreas(profile.id);
+        this.renderWeakAreas(weakAreas);
+        this.renderTrainingCheckboxes(weakAreas);
+        this.showScreen('training');
+    }
+
+    /**
+     * Affiche les points faibles
+     * @param {Array} weakAreas - Liste des points faibles
+     */
+    renderWeakAreas(weakAreas) {
+        if (!this.weakAreasList) return;
+
+        if (weakAreas.length === 0) {
+            this.weakAreasList.innerHTML = '<p class="no-weak">Bravo ! Aucun point faible détecté. Continue à jouer pour que je puisse analyser tes performances.</p>';
+            return;
+        }
+
+        this.weakAreasList.innerHTML = weakAreas.map(area => `
+            <div class="weak-area-item">
+                <span class="weak-label">${area.label}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${area.successRate}%; background: ${this.getSuccessColor(area.successRate)}"></div>
+                </div>
+                <span class="weak-percent">${area.successRate}%</span>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Retourne une couleur selon le taux de réussite
+     * @param {number} rate - Taux de réussite (0-100)
+     * @returns {string}
+     */
+    getSuccessColor(rate) {
+        if (rate < 30) return '#ff5252';
+        if (rate < 50) return '#ff9800';
+        if (rate < 70) return '#ffd740';
+        return '#69f0ae';
+    }
+
+    /**
+     * Affiche les checkboxes pour sélectionner les zones à travailler
+     * @param {Array} weakAreas - Liste des points faibles
+     */
+    renderTrainingCheckboxes(weakAreas) {
+        if (!this.trainingCheckboxes) return;
+
+        this.selectedWeakAreas = [];
+
+        if (weakAreas.length === 0) {
+            this.trainingCheckboxes.innerHTML = '<p class="no-areas">Pas de données disponibles pour l\'entraînement ciblé.</p>';
+            return;
+        }
+
+        this.trainingCheckboxes.innerHTML = weakAreas.map((area, index) => `
+            <label class="training-checkbox">
+                <input type="checkbox" value="${index}" data-type="${area.type}" data-value="${area.value}">
+                <span>${area.label} (${area.successRate}%)</span>
+            </label>
+        `).join('');
+
+        // Ajouter les event listeners
+        this.trainingCheckboxes.querySelectorAll('input').forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) {
+                    this.selectedWeakAreas.push({
+                        type: cb.dataset.type,
+                        value: cb.dataset.value
+                    });
+                } else {
+                    this.selectedWeakAreas = this.selectedWeakAreas.filter(
+                        a => !(a.type === cb.dataset.type && a.value === cb.dataset.value)
+                    );
+                }
+            });
+        });
+    }
+
+    /**
+     * Démarre le mode entraînement
+     * @param {Object} callbacks - Callbacks du jeu
+     */
+    startTrainingMode(callbacks) {
+        if (this.selectedWeakAreas.length === 0) {
+            this.showError('Sélectionne au moins un point à travailler');
+            return;
+        }
+
+        // Construire la configuration d'entraînement
+        const tables = [];
+        let operationType = 'combined';
+
+        this.selectedWeakAreas.forEach(area => {
+            if (area.type === 'table') {
+                tables.push(parseInt(area.value));
+            } else if (area.type === 'operation') {
+                operationType = area.value;
+            }
+        });
+
+        // Si on a des tables, on utilise multiplication/division
+        if (tables.length > 0 && operationType === 'combined') {
+            operationType = 'multiplication';
+        }
+
+        const modeConfig = {
+            mode: 'asteroids',
+            count: this.selectedTrainingCount,
+            operation: {
+                type: operationType,
+                tables: tables.length > 0 ? tables : [1, 2, 3, 4, 5],
+                digitCount: 1,
+                allowNegatives: false
+            }
+        };
+
+        callbacks.onStartGame(tables.length > 0 ? tables : [1, 2, 3, 4, 5], this.selectedDifficulty, modeConfig);
+    }
+
+    // ====================== ÉCRAN STATISTIQUES ======================
+
+    /**
+     * Affiche l'écran de statistiques
+     */
+    showStatisticsScreen() {
+        const profile = profileManager.getActiveProfile();
+
+        if (!profile) {
+            this.showError('Crée un profil pour voir tes statistiques');
+            return;
+        }
+
+        const stats = profileManager.getAggregatedStats(profile.id);
+        this.renderStatsChart(stats, 'tables');
+        this.renderFrequentErrors(stats.frequentErrors);
+        this.showScreen('statistics');
+    }
+
+    /**
+     * Affiche le graphique de statistiques
+     * @param {Object} stats - Statistiques agrégées
+     * @param {string} type - Type de graphique ('tables' ou 'operations')
+     */
+    renderStatsChart(stats, type) {
+        if (!this.statsChartCanvas) return;
+
+        const ctx = this.statsChartCanvas.getContext('2d');
+
+        // Détruire le graphique existant
+        if (this.statsChart) {
+            this.statsChart.destroy();
+        }
+
+        let labels, data, colors;
+
+        if (type === 'tables') {
+            labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+            data = labels.map(t => {
+                const s = stats.tableStats[t];
+                if (!s || s.correct + s.wrong === 0) return 0;
+                return Math.round(s.correct / (s.correct + s.wrong) * 100);
+            });
+            colors = data.map(d => this.getSuccessColor(d));
+        } else if (type === 'operations') {
+            const ops = ['multiplication', 'addition', 'subtraction', 'division', 'fractions', 'percentages', 'powers'];
+            labels = ['×', '+', '−', '÷', '½', '%', 'x²'];
+            data = ops.map(op => {
+                const s = stats.operationStats[op];
+                if (!s || s.correct + s.wrong === 0) return 0;
+                return Math.round(s.correct / (s.correct + s.wrong) * 100);
+            });
+            colors = data.map(d => this.getSuccessColor(d));
+        }
+
+        this.statsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Taux de réussite (%)',
+                    data: data,
+                    backgroundColor: colors,
+                    borderColor: colors.map(c => c.replace('0.7', '1')),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#8892b0'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Affiche les erreurs fréquentes
+     * @param {Array} frequentErrors - Liste des erreurs fréquentes
+     */
+    renderFrequentErrors(frequentErrors) {
+        if (!this.frequentErrorsList) return;
+
+        if (!frequentErrors || frequentErrors.length === 0) {
+            this.frequentErrorsList.innerHTML = '<p class="no-errors">Pas encore d\'erreurs enregistrées.</p>';
+            return;
+        }
+
+        const topErrors = frequentErrors.slice(0, 10);
+        this.frequentErrorsList.innerHTML = topErrors.map(e => `
+            <div class="frequent-error-item">
+                <span class="error-question">${e.question}</span>
+                <span class="error-count">${e.count} erreur${e.count > 1 ? 's' : ''}</span>
+            </div>
+        `).join('');
+    }
+
+    // ====================== RÉINITIALISATION ======================
+
+    /**
+     * Réinitialise les données d'entraînement après confirmation
+     */
+    resetTrainingData() {
+        const profile = profileManager.getActiveProfile();
+        if (!profile) {
+            this.showError('Aucun profil actif');
+            return;
+        }
+
+        if (confirm('Es-tu sûr de vouloir réinitialiser les données d\'entraînement ?\nTes statistiques et historique d\'erreurs seront effacés.')) {
+            profileManager.resetAllTrainingData(profile.id);
+
+            // Rafraîchir l'affichage
+            const weakAreas = profileManager.getWeakAreas(profile.id);
+            this.renderWeakAreas(weakAreas);
+            this.renderTrainingCheckboxes(weakAreas);
+        }
+    }
+
+    /**
+     * Réinitialise les statistiques après confirmation
+     */
+    resetStatistics() {
+        const profile = profileManager.getActiveProfile();
+        if (!profile) {
+            this.showError('Aucun profil actif');
+            return;
+        }
+
+        if (confirm('Es-tu sûr de vouloir réinitialiser toutes les statistiques ?\nCette action est irréversible !')) {
+            profileManager.resetAllTrainingData(profile.id);
+
+            // Rafraîchir l'affichage du graphique
+            const stats = profileManager.getAggregatedStats(profile.id);
+            this.renderStatsChart(stats, 'tables');
+            this.renderFrequentErrors(stats.frequentErrors);
+        }
     }
 }
 

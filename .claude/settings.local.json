@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"Checking $f...\")",
+      "Bash(echo:*)",
+      "Bash(done)"
+    ]
+  }
+}

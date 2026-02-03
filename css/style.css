@@ -717,67 +717,72 @@ body {
 
 /* Animation laser orienté - PUISSANT */
 .laser-beam {
+    --laser-color: #4fc3f7;
+    --laser-rgb: 79, 195, 247;
     position: absolute;
     width: 12px;
     background: linear-gradient(to right,
-        rgba(79, 195, 247, 0.3),
+        rgba(var(--laser-rgb), 0.3),
         rgba(255, 255, 255, 1) 40%,
         rgba(255, 255, 255, 1) 60%,
-        rgba(79, 195, 247, 0.3)
+        rgba(var(--laser-rgb), 0.3)
     );
     box-shadow:
-        0 0 15px 5px rgba(79, 195, 247, 0.8),
-        0 0 30px 10px rgba(79, 195, 247, 0.6),
-        0 0 50px 15px rgba(79, 195, 247, 0.4),
-        0 0 80px 20px rgba(105, 240, 174, 0.3),
+        0 0 15px 5px rgba(var(--laser-rgb), 0.8),
+        0 0 30px 10px rgba(var(--laser-rgb), 0.6),
+        0 0 50px 15px rgba(var(--laser-rgb), 0.4),
         inset 0 0 10px rgba(255, 255, 255, 0.8);
     border-radius: 6px;
     z-index: 5;
     pointer-events: none;
-    overflow: visible;
 }
 
-/* Animation du tir laser - le faisceau voyage vers la cible */
+/* Animation du tir laser - simple fade in/out */
 .laser-beam.shooting {
     animation: laserTravel var(--travel-time) linear forwards;
 }
 
+/* Test: laser sans box-shadow */
+.laser-beam.no-shadow {
+    box-shadow: none;
+}
+
 @keyframes laserTravel {
     0% {
-        clip-path: inset(100% 0 0 0);
+        opacity: 0;
         filter: brightness(1.5);
     }
-    60% {
-        clip-path: inset(0 0 0 0);
-        filter: brightness(1.2);
+    15% {
+        opacity: 1;
+        filter: brightness(1.5);
     }
-    80% {
-        clip-path: inset(0 0 0 0);
+    70% {
         opacity: 1;
         filter: brightness(1);
     }
     100% {
-        clip-path: inset(0 0 100% 0);
-        opacity: 0.8;
+        opacity: 0;
     }
 }
 
 /* Tête lumineuse du laser (point d'impact) */
 .laser-head {
+    --laser-color: #4fc3f7;
+    --laser-rgb: 79, 195, 247;
     position: absolute;
     width: 30px;
     height: 30px;
     border-radius: 50%;
     background: radial-gradient(circle,
         rgba(255, 255, 255, 1) 0%,
-        rgba(79, 195, 247, 0.9) 30%,
-        rgba(79, 195, 247, 0.5) 60%,
+        rgba(var(--laser-rgb), 0.9) 30%,
+        rgba(var(--laser-rgb), 0.5) 60%,
         transparent 100%
     );
     box-shadow:
-        0 0 20px 10px rgba(79, 195, 247, 0.8),
-        0 0 40px 20px rgba(79, 195, 247, 0.5),
-        0 0 60px 30px rgba(105, 240, 174, 0.3);
+        0 0 20px 10px rgba(var(--laser-rgb), 0.8),
+        0 0 40px 20px rgba(var(--laser-rgb), 0.5),
+        0 0 60px 30px rgba(var(--laser-rgb), 0.3);
     pointer-events: none;
     z-index: 6;
     animation: laserHeadTravel var(--travel-time) linear forwards;
@@ -804,18 +809,20 @@ body {
 
 /* Flash au point de départ (canon) */
 .laser-muzzle-flash {
+    --laser-color: #4fc3f7;
+    --laser-rgb: 79, 195, 247;
     position: absolute;
     width: 50px;
     height: 50px;
     border-radius: 50%;
     background: radial-gradient(circle,
         rgba(255, 255, 255, 1) 0%,
-        rgba(79, 195, 247, 0.8) 40%,
+        rgba(var(--laser-rgb), 0.8) 40%,
         transparent 70%
     );
     box-shadow:
-        0 0 30px 15px rgba(79, 195, 247, 0.9),
-        0 0 60px 30px rgba(79, 195, 247, 0.5);
+        0 0 30px 15px rgba(var(--laser-rgb), 0.9),
+        0 0 60px 30px rgba(var(--laser-rgb), 0.5);
     pointer-events: none;
     z-index: 7;
     animation: muzzleFlash 0.2s ease-out forwards;
@@ -838,12 +845,14 @@ body {
 
 /* Traînée de particules le long du laser */
 .laser-particle {
+    --laser-color: #4fc3f7;
+    --laser-rgb: 79, 195, 247;
     position: absolute;
     width: 4px;
     height: 4px;
     border-radius: 50%;
     background: white;
-    box-shadow: 0 0 6px 3px rgba(79, 195, 247, 0.8);
+    box-shadow: 0 0 6px 3px rgba(var(--laser-rgb), 0.8);
     pointer-events: none;
     z-index: 5;
     animation: laserParticleMove 0.3s ease-out forwards;
@@ -2618,6 +2627,432 @@ body {
 /* RESPONSIVE PROFILS     */
 /* ====================== */
 
+/* ====================== */
+/* NOUVELLES OPÉRATIONS   */
+/* ====================== */
+
+.operation-btn[data-operation="fractions"],
+.operation-btn[data-operation="percentages"],
+.operation-btn[data-operation="powers"] {
+    font-size: 1rem;
+}
+
+/* ====================== */
+/* ÉCRAN DE RÉVISION      */
+/* ====================== */
+
+.review-container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+    width: 95%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.review-title {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.review-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-dim);
+    font-size: 1.1rem;
+}
+
+.review-score-value {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.review-error-value {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+.review-errors-list {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    max-height: 50vh;
+}
+
+.review-error-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.review-question {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.review-answers {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.review-answers .wrong {
+    color: var(--danger);
+}
+
+.review-answers .correct {
+    color: var(--success);
+}
+
+.review-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.no-errors {
+    color: var(--success);
+    font-size: 1.2rem;
+    padding: 2rem;
+}
+
+/* ====================== */
+/* ÉCRAN D'ENTRAÎNEMENT   */
+/* ====================== */
+
+.training-container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+    width: 95%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.training-title {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.training-subtitle {
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+}
+
+.weak-areas-list {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    max-height: 25vh;
+    overflow-y: auto;
+}
+
+.weak-area-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.weak-label {
+    min-width: 100px;
+    text-align: left;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.weak-percent {
+    min-width: 45px;
+    text-align: right;
+    color: var(--text-dim);
+    font-weight: bold;
+}
+
+.no-weak {
+    color: var(--success);
+    padding: 1rem;
+    font-style: italic;
+}
+
+.training-options {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.training-options h3 {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.training-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.training-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.training-checkbox:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.training-checkbox input {
+    accent-color: var(--primary);
+}
+
+.training-checkbox span {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.training-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-dim);
+}
+
+.count-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.count-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.count-btn:hover {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.1);
+}
+
+.count-btn.active {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.2);
+}
+
+.training-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.no-areas {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* ====================== */
+/* ÉCRAN STATISTIQUES     */
+/* ====================== */
+
+.stats-container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    max-width: 700px;
+    width: 95%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-title {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.stats-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.stats-tab {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.stats-tab:hover {
+    border-color: var(--primary);
+}
+
+.stats-tab.active {
+    border-color: var(--primary);
+    background: rgba(79, 195, 247, 0.2);
+    color: var(--primary);
+}
+
+.chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    height: 250px;
+}
+
+.frequent-errors {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.frequent-errors h3 {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.frequent-errors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.frequent-error-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.error-question {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.error-count {
+    color: var(--danger);
+    font-size: 0.85rem;
+}
+
+/* Boutons menu footer */
+.menu-extra-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.training-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--success);
+    background: transparent;
+    border: 2px solid var(--success);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.training-btn:hover {
+    background: rgba(105, 240, 174, 0.15);
+    transform: translateY(-1px);
+}
+
+.stats-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--secondary);
+    background: transparent;
+    border: 2px solid var(--secondary);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.stats-btn:hover {
+    background: rgba(124, 77, 255, 0.15);
+    transform: translateY(-1px);
+}
+
 @media (max-width: 600px) {
     .player-panel {
         width: 100%;
@@ -2716,5 +3151,54 @@ body {
 
     .leaderboard-actions button {
         width: 100%;
+    }
+
+    /* Responsive nouvelles fonctionnalités */
+    .review-container,
+    .training-container,
+    .stats-container {
+        padding: 1rem;
+    }
+
+    .review-title,
+    .training-title,
+    .stats-title {
+        font-size: 1.5rem;
+    }
+
+    .review-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .review-actions,
+    .training-actions {
+        flex-direction: column;
+    }
+
+    .review-actions button,
+    .training-actions button {
+        width: 100%;
+    }
+
+    .weak-area-item {
+        flex-wrap: wrap;
+    }
+
+    .weak-label {
+        min-width: 80px;
+    }
+
+    .menu-extra-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .menu-extra-buttons button {
+        width: 100%;
+    }
+
+    .chart-container {
+        height: 200px;
     }
 }

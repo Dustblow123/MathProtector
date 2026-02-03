@@ -22,6 +22,7 @@ class Asteroid {
         this.question = q.question;
         this.answer = q.answer;
         this.operator = q.operator;
+        this.table = q.table || null; // Table concernée (pour multiplication/division)
 
         // Position initiale (en haut, position X aléatoire)
         this.size = options.size || 60;
@@ -29,12 +30,16 @@ class Asteroid {
         this.y = options.y !== undefined ? options.y : -this.size;
 
         // Vitesse selon difficulté
+        // Les vitesses sont normalisées par rapport à une hauteur de référence de 1080px
+        // pour que la difficulté soit identique quelle que soit la taille de l'écran
+        const REFERENCE_HEIGHT = 1080;
+        const heightRatio = canvasHeight / REFERENCE_HEIGHT;
         const speeds = {
-            easy: 0.8,
-            medium: 1.5,
-            hard: 2.5
+            easy: 0.7,
+            medium: 1.3,
+            hard: 2.2
         };
-        this.baseSpeed = speeds[difficulty] || speeds.medium;
+        this.baseSpeed = (speeds[difficulty] || speeds.medium) * heightRatio;
         this.speed = this.baseSpeed;
 
         // Calculer la direction vers la Terre (centre-bas de l'écran)
@@ -171,10 +176,22 @@ class Asteroid {
 
         // Effet de halo lumineux quand touché par le laser
         if (this.isHit) {
-            // Halo cyan pulsant autour de l'astéroïde
+            // Convertir la couleur hex en RGB
+            const color = this.hitColor || '#4fc3f7';
+            const hexToRgb = (hex) => {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 79, g: 195, b: 247 };
+            };
+            const rgb = hexToRgb(color);
+
+            // Halo coloré pulsant autour de l'astéroïde
             const hitGlow = ctx.createRadialGradient(0, 0, this.size * 0.5, 0, 0, this.size * 1.8);
-            hitGlow.addColorStop(0, 'rgba(79, 195, 247, 0.6)');
-            hitGlow.addColorStop(0.5, 'rgba(79, 195, 247, 0.3)');
+            hitGlow.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6)`);
+            hitGlow.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
             hitGlow.addColorStop(1, 'transparent');
             ctx.fillStyle = hitGlow;
             ctx.beginPath();
@@ -223,8 +240,8 @@ class Asteroid {
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Contour (cyan si touché)
-        ctx.strokeStyle = this.isHit ? '#4fc3f7' : this.colors.dark;
+        // Contour (couleur du profil si touché)
+        ctx.strokeStyle = this.isHit ? (this.hitColor || '#4fc3f7') : this.colors.dark;
         ctx.lineWidth = this.isHit ? 3 : 2;
         ctx.stroke();
 
