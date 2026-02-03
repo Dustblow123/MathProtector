@@ -462,8 +462,16 @@ class AudioManager {
     toggleMusic() {
         this.musicEnabled = !this.musicEnabled;
         if (this.musicEnabled) {
+            // Restaurer le volume de la musique
+            if (this.musicGain) {
+                this.musicGain.gain.value = 0.3;
+            }
             this.startMusic();
         } else {
+            // Couper immédiatement le volume de la musique
+            if (this.musicGain) {
+                this.musicGain.gain.value = 0;
+            }
             this.stopMusic();
         }
         return this.musicEnabled;
@@ -474,6 +482,17 @@ class AudioManager {
      */
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
+        if (this.soundEnabled) {
+            // Restaurer le volume des effets
+            if (this.sfxGain) {
+                this.sfxGain.gain.value = 0.5;
+            }
+        } else {
+            // Couper immédiatement le volume des effets
+            if (this.sfxGain) {
+                this.sfxGain.gain.value = 0;
+            }
+        }
         return this.soundEnabled;
     }
 
