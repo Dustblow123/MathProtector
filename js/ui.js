@@ -1075,7 +1075,7 @@ class UIManager {
                 break;
             case 'game':
                 this.gameScreen.classList.add('active');
-                this.answerInput.focus();
+                this.answerInput.focus({ preventScroll: true });
                 break;
             case 'gameover':
                 this.gameoverScreen.classList.add('active');
@@ -1481,7 +1481,25 @@ class UIManager {
      * Focus sur l'input de réponse
      */
     focusInput() {
-        this.answerInput.focus();
+        // preventScroll évite le défilement automatique sur mobile
+        this.answerInput.focus({ preventScroll: true });
+    }
+
+    /**
+     * Ajuste l'interface pour le clavier virtuel mobile
+     * @param {boolean} isOpen - Le clavier est-il ouvert
+     * @param {number} keyboardHeight - Hauteur du clavier en pixels
+     */
+    adjustForKeyboard(isOpen, keyboardHeight) {
+        const answerContainer = document.getElementById('answer-container');
+        if (!answerContainer) return;
+
+        if (isOpen) {
+            // Repositionner l'input au-dessus du clavier
+            // La classe keyboard-open sur game-screen gère cela via CSS
+        } else {
+            // Restaurer la position par défaut (via CSS)
+        }
     }
 
     /**

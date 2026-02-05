@@ -75,9 +75,16 @@ class Game {
             height: 100
         };
 
+        // État du clavier virtuel
+        this.keyboardOpen = false;
+        this.keyboardHeight = 0;
+
         // Initialisation
         this.resize();
         window.addEventListener('resize', () => this.resize());
+
+        // Initialiser le gestionnaire de clavier mobile
+        this.initMobileKeyboardHandler();
 
         // Initialiser l'UI
         this.initUI();
@@ -142,8 +149,13 @@ class Game {
      * Redimensionne le canvas
      */
     resize() {
+        // Utiliser visualViewport si disponible pour avoir la vraie hauteur visible
+        const height = this.keyboardOpen && window.visualViewport
+            ? window.visualViewport.height
+            : window.innerHeight;
+
         this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.canvas.height = height;
 
         // Mettre à jour la position du scientifique
         this.scientist.x = this.canvas.width / 2;
@@ -151,6 +163,73 @@ class Game {
 
         // Régénérer les étoiles
         this.generateStars();
+    }
+
+    /**
+     * Initialise le gestionnaire de clavier virtuel mobile
+     */
+    initMobileKeyboardHandler() {
+        // Vérifier si visualViewport est supporté
+        if (!window.visualViewport) {
+            return;
+        }
+
+        // Écouter les changements de taille du viewport visuel
+        window.visualViewport.addEventListener('resize', () => {
+            this.handleViewportResize();
+        });
+
+        // Écouter aussi le scroll (pour certains navigateurs)
+        window.visualViewport.addEventListener('scroll', () => {
+            this.handleViewportResize();
+        });
+    }
+
+    /**
+     * Gère le redimensionnement du viewport (ouverture/fermeture du clavier)
+     */
+    handleViewportResize() {
+        if (!window.visualViewport) return;
+
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const heightDiff = windowHeight - viewportHeight;
+
+        // Si la différence est > 150px, on considère que le clavier est ouvert
+        const keyboardIsOpen = heightDiff > 150;
+
+        if (keyboardIsOpen !== this.keyboardOpen) {
+            this.keyboardOpen = keyboardIsOpen;
+            this.keyboardHeight = keyboardIsOpen ? heightDiff : 0;
+            this.adjustForKeyboard(keyboardIsOpen, this.keyboardHeight);
+        }
+    }
+
+    /**
+     * Ajuste l'interface pour le clavier virtuel
+     * @param {boolean} isOpen - Le clavier est-il ouvert
+     * @param {number} keyboardHeight - Hauteur du clavier en pixels
+     */
+    adjustForKeyboard(isOpen, keyboardHeight) {
+        const gameScreen = document.getElementById('game-screen');
+
+        if (isOpen) {
+            // Mettre à jour la variable CSS pour la hauteur du clavier
+            document.documentElement.style.setProperty('--keyboard-height', keyboardHeight + 'px');
+            gameScreen.classList.add('keyboard-open');
+
+            // Redimensionner le canvas à la taille visible
+            this.resize();
+        } else {
+            document.documentElement.style.setProperty('--keyboard-height', '0px');
+            gameScreen.classList.remove('keyboard-open');
+
+            // Restaurer le canvas à la taille complète
+            this.resize();
+        }
+
+        // Informer l'UI
+        ui.adjustForKeyboard(isOpen, keyboardHeight);
     }
 
     /**
