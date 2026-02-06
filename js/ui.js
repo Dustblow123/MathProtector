@@ -251,6 +251,9 @@ class UIManager {
         this.answerInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 this.submitAnswer(callbacks.onSubmitAnswer);
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                this.answerInput.value = '';
             }
         });
 
@@ -2503,9 +2506,9 @@ class UIManager {
                         activeInput.value = '';
                     }
                 } else if (value === 'backspace') {
-                    activeInput.value = activeInput.value.slice(0, -1);
+                    activeInput.value = '';
                     if (activeInput !== this.answerInput) {
-                        this.answerInput.value = activeInput.value;
+                        this.answerInput.value = '';
                     }
                     // Dispatch input event to trigger auto-validate via the same path as desktop
                     this.answerInput.dispatchEvent(new Event('input'));
