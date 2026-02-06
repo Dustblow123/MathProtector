@@ -1457,10 +1457,14 @@ body {
 
 /* Responsive */
 @media (max-width: 700px) {
+    #menu-screen {
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
     .menu-container {
         padding: 0.5rem;
-        max-height: 100vh;
-        overflow-y: auto;
+        padding-bottom: 1.5rem;
     }
 
     .menu-header {
@@ -1556,6 +1560,21 @@ body {
     .options-row {
         flex-direction: column;
         gap: 0.3rem;
+    }
+
+    .numpad-layout-selector {
+        margin-top: 4px;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .layout-btn {
+        padding: 2px 8px;
+        font-size: 0.65rem;
+    }
+
+    .layout-label {
+        font-size: 0.65rem;
     }
 
     #hud {
