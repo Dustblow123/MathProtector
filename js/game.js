@@ -733,8 +733,11 @@ class Game {
         // Lasers actifs
         this.drawLasers();
 
-        // Asteroides
-        this.asteroids.forEach(asteroid => asteroid.draw(ctx));
+        // Asteroides (bodies only, questions drawn separately)
+        this.asteroids.forEach(asteroid => asteroid.draw(ctx, true)); // true = skip question
+
+        // Draw questions with overlap avoidance, priority to lowest asteroids
+        this.drawAsteroidQuestions(ctx);
 
         // PowerUp actif
         if (this.activePowerUp) {
@@ -762,6 +765,53 @@ class Game {
                 ctx.arc(this.repulsorFlash.x, this.repulsorFlash.y, radius, 0, Math.PI * 2);
                 ctx.fill();
             }
+        }
+    }
+
+    /**
+     * Draw asteroid questions with overlap avoidance
+     * Priority to asteroids closest to Earth (highest Y)
+     */
+    drawAsteroidQuestions(ctx) {
+        // Sort by Y descending (lowest first = highest priority)
+        const sorted = [...this.asteroids].sort((a, b) => b.y - a.y);
+        const occupiedRegions = [];
+        const bubbleWidth = 100;
+        const bubbleHeight = 40;
+        const pointerHeight = 10;
+        const minGap = 4;
+
+        for (const asteroid of sorted) {
+            let bubbleX = asteroid.x - bubbleWidth / 2;
+            let bubbleY = asteroid.y - asteroid.size - 50;
+
+            // Check overlap with already placed labels and push up if needed
+            let attempts = 0;
+            while (attempts < 20) {
+                let overlaps = false;
+                for (const region of occupiedRegions) {
+                    if (bubbleX < region.x + region.w + minGap &&
+                        bubbleX + bubbleWidth + minGap > region.x &&
+                        bubbleY < region.y + region.h + minGap &&
+                        bubbleY + bubbleHeight + minGap > region.y) {
+                        overlaps = true;
+                        // Push this label above the conflicting one
+                        bubbleY = region.y - bubbleHeight - pointerHeight - minGap;
+                        break;
+                    }
+                }
+                if (!overlaps) break;
+                attempts++;
+            }
+
+            // Ensure not off-screen
+            if (bubbleY < 5) bubbleY = 5;
+
+            // Register this region
+            occupiedRegions.push({ x: bubbleX, y: bubbleY, w: bubbleWidth, h: bubbleHeight });
+
+            // Draw the question at the computed position
+            asteroid.drawQuestionAt(ctx, bubbleX, bubbleY);
         }
     }
 
@@ -1034,6 +1084,25 @@ class Game {
 
             return true; // Garder ce laser
         });
+    }
+
+    /**
+     * Check if answer is valid for any current target (asteroid or powerup)
+     * @param {number} answer - The answer to check
+     * @returns {boolean} - True if answer matches any target
+     */
+    isValidTarget(answer) {
+        // Check powerup
+        if (this.activePowerUp && this.activePowerUp.answer === answer) {
+            return true;
+        }
+        // Check asteroids
+        for (const asteroid of this.asteroids) {
+            if (asteroid.answer === answer) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

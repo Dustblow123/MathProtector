@@ -194,8 +194,9 @@ class Asteroid {
     /**
      * Dessine l'astéroïde sur le canvas
      * @param {CanvasRenderingContext2D} ctx - Contexte de dessin
+     * @param {boolean} skipQuestion - Si true, ne dessine pas la question
      */
-    draw(ctx) {
+    draw(ctx, skipQuestion) {
         if (!this.active) return;
 
         ctx.save();
@@ -281,7 +282,7 @@ class Asteroid {
         ctx.restore();
 
         // Question (ne tourne pas avec l'astéroïde)
-        this.drawQuestion(ctx);
+        if (!skipQuestion) this.drawQuestion(ctx);
     }
 
     /**
@@ -313,6 +314,49 @@ class Asteroid {
         const bubbleHeight = 40;
         const bubbleX = this.x - bubbleWidth / 2;
         const bubbleY = this.y - this.size - 50;
+
+        // Bulle
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.beginPath();
+        ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 10);
+        ctx.fill();
+
+        // Bordure
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Petite pointe vers l'astéroïde
+        ctx.beginPath();
+        ctx.moveTo(this.x - 8, bubbleY + bubbleHeight);
+        ctx.lineTo(this.x, bubbleY + bubbleHeight + 10);
+        ctx.lineTo(this.x + 8, bubbleY + bubbleHeight);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fill();
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.stroke();
+
+        // Texte
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.question, this.x, bubbleY + bubbleHeight / 2);
+
+        ctx.restore();
+    }
+
+    /**
+     * Dessine la question à une position spécifique (pour éviter les chevauchements)
+     * @param {CanvasRenderingContext2D} ctx - Contexte de dessin
+     * @param {number} bubbleX - Position X de la bulle
+     * @param {number} bubbleY - Position Y de la bulle
+     */
+    drawQuestionAt(ctx, bubbleX, bubbleY) {
+        ctx.save();
+
+        const bubbleWidth = 100;
+        const bubbleHeight = 40;
 
         // Bulle
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';

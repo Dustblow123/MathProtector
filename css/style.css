@@ -3805,3 +3805,23 @@ body {
 .has-numpad.numpad-side #answer-container {
     display: none !important;
 }
+
+/* Auto-validate option */
+.auto-validate-option {
+    margin-top: 6px;
+}
+
+.auto-validate-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.auto-validate-label input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+}

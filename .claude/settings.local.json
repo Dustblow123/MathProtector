@@ -6,7 +6,14 @@
       "Bash(do echo \"Checking $f...\")",
       "Bash(echo:*)",
       "Bash(done)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(where:*)",
+      "Bash(java -version:*)",
+      "Bash(export JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\")",
+      "Bash(export ANDROID_HOME=\"C:/Users/Nico/AppData/Local/Android/Sdk\")",
+      "Bash(\"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager.bat\" \"platform-tools\" \"build-tools;34.0.0\" \"platforms;android-34\")",
+      "Bash(node -e:*)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ANDROID_HOME=\"C:/Users/Nico/AppData/Local/Android/Sdk\" \"E:/MathProtectorApp/android/gradlew.bat\":*)"
     ]
   }
 }

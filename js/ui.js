@@ -176,7 +176,10 @@ class UIManager {
         this.slowdownOverlay = null;
 
         // Numpad layout
-        this.numpadLayout = localStorage.getItem('mathGameNumpadLayout') || 'normal';
+        this.numpadLayout = localStorage.getItem('mathGameNumpadLayout') || 'right';
+
+        // Auto-validate
+        this.autoValidate = localStorage.getItem('mathGameAutoValidate') !== 'false'; // default true
     }
 
     /**
@@ -251,9 +254,17 @@ class UIManager {
             }
         });
 
+        // Auto-validate on input
+        this.answerInput.addEventListener('input', () => {
+            this.tryAutoValidate(callbacks.onSubmitAnswer);
+        });
+
         this.submitBtn.addEventListener('click', () => {
             this.submitAnswer(callbacks.onSubmitAnswer);
         });
+
+        // Store callback for auto-validate
+        this.onSubmitAnswer = callbacks.onSubmitAnswer;
 
         // Pause
         this.pauseBtn.addEventListener('click', () => {
@@ -321,6 +332,17 @@ class UIManager {
                 }
             });
         });
+
+        // Auto-validate checkbox
+        const autoValidateCheckbox = document.getElementById('auto-validate-checkbox');
+        if (autoValidateCheckbox) {
+            autoValidateCheckbox.checked = this.autoValidate;
+            autoValidateCheckbox.addEventListener('change', () => {
+                this.autoValidate = autoValidateCheckbox.checked;
+                localStorage.setItem('mathGameAutoValidate', this.autoValidate.toString());
+                this.updateSubmitBtnVisibility();
+            });
+        }
 
         // Numpad layout buttons
         document.querySelectorAll('.layout-btn').forEach(btn => {
@@ -1108,6 +1130,49 @@ class UIManager {
     }
 
     /**
+     * Try auto-validation if enabled
+     */
+    tryAutoValidate(callback) {
+        if (!this.autoValidate) return;
+        const activeInput = this.getActiveNumpadInput();
+        const value = (activeInput === this.answerInput) ? this.answerInput.value.trim() : activeInput.value.trim();
+        if (value === '' || value === '-') return;
+        const answer = parseInt(value);
+        if (isNaN(answer)) return;
+
+        // Check if this answer matches any target
+        if (window.game && window.game.isValidTarget(answer)) {
+            // Sync inputs
+            if (activeInput !== this.answerInput) {
+                this.answerInput.value = activeInput.value;
+            }
+            callback(answer);
+            this.answerInput.value = '';
+            if (activeInput !== this.answerInput) {
+                activeInput.value = '';
+            }
+        }
+    }
+
+    /**
+     * Update submit button visibility based on auto-validate setting
+     */
+    updateSubmitBtnVisibility() {
+        if (this.submitBtn) {
+            this.submitBtn.style.display = this.autoValidate ? 'none' : '';
+        }
+        // Also hide/show numpad submit buttons
+        document.querySelectorAll('.numpad-btn[data-value="submit"]').forEach(btn => {
+            btn.style.display = this.autoValidate ? 'none' : '';
+        });
+        // Also for side panel
+        const sideSubmit = document.querySelector('#numpad-side-panel .numpad-btn[data-value="submit"]');
+        if (sideSubmit) {
+            sideSubmit.style.display = this.autoValidate ? 'none' : '';
+        }
+    }
+
+    /**
      * Affiche un écran
      * @param {string} screen - 'menu', 'game', 'gameover', 'pause', 'victory', 'leaderboard', 'review', 'training', 'statistics'
      */
@@ -1139,6 +1204,7 @@ class UIManager {
             case 'game':
                 this.gameScreen.classList.add('active');
                 this.answerInput.focus({ preventScroll: true });
+                this.updateSubmitBtnVisibility();
                 break;
             case 'gameover':
                 this.gameoverScreen.classList.add('active');
@@ -2444,6 +2510,12 @@ class UIManager {
                     }
                 } else {
                     activeInput.value += value;
+                    // Sync inputs if using side panel
+                    if (activeInput !== this.answerInput) {
+                        this.answerInput.value = activeInput.value;
+                    }
+                    // Try auto-validate
+                    this.tryAutoValidate(this.onSubmitAnswer);
                 }
             };
         };
@@ -2589,12 +2661,20 @@ class UIManager {
             }
             if (normalSubmit) normalSubmit.style.display = 'none';
 
-            // Show side panel on opposite side
+            // Show side panel only if numpad is actually visible
             if (sidePanel) {
-                sidePanel.classList.remove('hidden', 'side-left', 'side-right');
-                sidePanel.classList.add(this.numpadLayout === 'left' ? 'side-right' : 'side-left');
+                if (this.numpadVisible) {
+                    sidePanel.classList.remove('hidden', 'side-left', 'side-right');
+                    sidePanel.classList.add(this.numpadLayout === 'left' ? 'side-right' : 'side-left');
+                } else {
+                    sidePanel.classList.add('hidden');
+                }
             }
-            if (this.gameScreen) this.gameScreen.classList.add('numpad-side');
+            if (this.numpadVisible) {
+                if (this.gameScreen) this.gameScreen.classList.add('numpad-side');
+            } else {
+                if (this.gameScreen) this.gameScreen.classList.remove('numpad-side');
+            }
             this.syncSideInput();
         } else {
             // Normal mode
@@ -2692,6 +2772,7 @@ class UIManager {
         const isMobile = ('ontouchstart' in window) && window.innerWidth <= 768;
 
         if (isVisible) {
+            this.numpadVisible = false;
             numpad.classList.add('hidden');
             const sidePanel = document.getElementById('numpad-side-panel');
             if (sidePanel) sidePanel.classList.add('hidden');
@@ -2703,6 +2784,7 @@ class UIManager {
             if (this.answerInput) this.answerInput.readOnly = false;
             this.focusInput();
         } else {
+            this.numpadVisible = true;
             numpad.classList.remove('hidden');
             this.gameScreen.classList.add('has-numpad');
             if (toggleBtn) toggleBtn.classList.add('active');
