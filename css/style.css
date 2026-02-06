@@ -3649,3 +3649,140 @@ body {
 .guest-prompt-btn:hover {
     background: rgba(79, 195, 247, 0.3);
 }
+
+/* ====================== */
+/* NUMPAD LAYOUT SELECTOR */
+/* ====================== */
+
+.numpad-layout-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.layout-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 2px;
+}
+
+.layout-btn {
+    padding: 3px 10px;
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    background: rgba(79, 195, 247, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.layout-btn:hover {
+    background: rgba(79, 195, 247, 0.2);
+    border-color: rgba(79, 195, 247, 0.5);
+}
+
+.layout-btn.active {
+    background: rgba(79, 195, 247, 0.4);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ================================= */
+/* NUMPAD SPLIT MODE (GAUCHER/DROITIER) */
+/* ================================= */
+
+/* Hide normal submit row in split mode */
+.custom-numpad.numpad-split .numpad-normal-submit {
+    display: none !important;
+}
+
+/* Keys panel — left side (gaucher) */
+.custom-numpad.numpad-split-left {
+    left: 0;
+    right: auto;
+    transform: none;
+    max-width: 180px;
+    border-radius: 0 10px 0 0;
+}
+
+/* Keys panel — right side (droitier) */
+.custom-numpad.numpad-split-right {
+    left: auto;
+    right: 0;
+    transform: none;
+    max-width: 180px;
+    border-radius: 10px 0 0 0;
+}
+
+/* Side panel (input + OK + backspace) */
+.numpad-side-panel {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 8px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border-top: 2px solid rgba(79, 195, 247, 0.3);
+    z-index: 20;
+    touch-action: none;
+    align-items: center;
+    width: 110px;
+}
+
+.numpad-side-panel.side-right {
+    right: 0;
+    left: auto;
+    border-radius: 10px 0 0 0;
+}
+
+.numpad-side-panel.side-left {
+    left: 0;
+    right: auto;
+    border-radius: 0 10px 0 0;
+}
+
+.numpad-side-input {
+    width: 100%;
+    height: 42px;
+    text-align: center;
+    border: 1px solid rgba(79, 195, 247, 0.5);
+    background: rgba(10, 10, 30, 0.9);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.numpad-side-input::-webkit-outer-spin-button,
+.numpad-side-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.numpad-side-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 8px rgba(79, 195, 247, 0.3);
+}
+
+.numpad-side-panel .numpad-submit {
+    width: 100%;
+    height: 44px;
+    font-size: 1rem;
+}
+
+.numpad-side-panel .numpad-delete {
+    width: 100%;
+    height: 36px;
+    font-size: 1rem;
+}
+
+/* Hide main answer-container in split mode */
+.has-numpad.numpad-side #answer-container {
+    display: none !important;
+}
