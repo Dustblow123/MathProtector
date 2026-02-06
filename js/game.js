@@ -618,7 +618,7 @@ class Game {
                             question: asteroid.question,
                             correctAnswer: asteroid.answer,
                             givenAnswer: null, // Non répondu
-                            operationType: this.operationConfig.type,
+                            operationType: this.getOperationTypeFromOperator(asteroid.operator),
                             table: asteroid.table || null,
                             responseTime: 0
                         };
@@ -667,6 +667,24 @@ class Game {
             answers.add(this.activePowerUp.answer);
         }
         return answers;
+    }
+
+    /**
+     * Déduit le type d'opération réel depuis l'opérateur de la question
+     * @param {string} operator - Opérateur (×, +, −, ÷, frac, %, ^)
+     * @returns {string} - Type d'opération
+     */
+    getOperationTypeFromOperator(operator) {
+        switch (operator) {
+            case '×': return 'multiplication';
+            case '+': return 'addition';
+            case '−': return 'subtraction';
+            case '÷': return 'division';
+            case 'frac': return 'fractions';
+            case '%': return 'percentages';
+            case '^': return 'powers';
+            default: return this.operationConfig.type;
+        }
     }
 
     /**
@@ -1153,7 +1171,7 @@ class Game {
             const answerData = {
                 question: asteroid.question,
                 correctAnswer: asteroid.answer,
-                operationType: this.operationConfig.type,
+                operationType: this.getOperationTypeFromOperator(asteroid.operator),
                 table: asteroid.table || null,
                 responseTime: responseTime
             };
@@ -1409,7 +1427,7 @@ class Game {
                     question: closestAsteroid.question,
                     correctAnswer: closestAsteroid.answer,
                     givenAnswer: givenAnswer,
-                    operationType: this.operationConfig.type,
+                    operationType: this.getOperationTypeFromOperator(closestAsteroid.operator),
                     table: closestAsteroid.table || null,
                     responseTime: responseTime
                 };

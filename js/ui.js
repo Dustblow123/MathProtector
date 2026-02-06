@@ -496,6 +496,17 @@ class UIManager {
      * Initialise les événements pour le système de profils
      */
     initProfileEvents() {
+        // Boutons "Créer mon profil" pour invités (game over + victory)
+        ['gameover', 'victory'].forEach(screen => {
+            const btn = document.getElementById(`guest-create-profile-${screen}`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    this.showScreen('menu');
+                    this.openPlayerPanel();
+                });
+            }
+        });
+
         // Ouvrir le panel joueur
         if (this.playerSelectorBtn) {
             this.playerSelectorBtn.addEventListener('click', () => this.openPlayerPanel());
@@ -1234,7 +1245,26 @@ class UIManager {
             }
         }
 
+        // Message invité si pas de profil
+        this.showGuestPrompt('gameover');
+
         this.showScreen('gameover');
+    }
+
+    /**
+     * Affiche le message invité si aucun profil n'est actif
+     * @param {string} screen - 'gameover' ou 'victory'
+     */
+    showGuestPrompt(screen) {
+        const prompt = document.getElementById(`guest-prompt-${screen}`);
+        if (!prompt) return;
+
+        const profile = profileManager.getActiveProfile();
+        if (profile) {
+            prompt.classList.add('hidden');
+        } else {
+            prompt.classList.remove('hidden');
+        }
     }
 
     /**
@@ -1750,6 +1780,9 @@ class UIManager {
             }
         }
 
+        // Message invité si pas de profil
+        this.showGuestPrompt('victory');
+
         this.showScreen('victory');
         this.createVictoryConfetti();
     }
@@ -2164,25 +2197,17 @@ class UIManager {
         // Construire la configuration d'entraînement
         const tables = [];
         let operationType = 'combined';
-        let hasFrequent = false;
 
         this.selectedWeakAreas.forEach(area => {
             if (area.type === 'table') {
                 tables.push(parseInt(area.value));
             } else if (area.type === 'operation') {
                 operationType = area.value;
-            } else if (area.type === 'frequent') {
-                hasFrequent = true;
             }
         });
 
         // Si on a des tables, on utilise multiplication/division
         if (tables.length > 0 && operationType === 'combined') {
-            operationType = 'multiplication';
-        }
-
-        // Si uniquement des erreurs fréquentes et rien d'autre, utiliser le mode combiné
-        if (hasFrequent && tables.length === 0 && operationType === 'combined') {
             operationType = 'multiplication';
         }
 

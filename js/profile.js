@@ -693,22 +693,6 @@ class ProfileManager {
             }
         }
 
-        // Inclure aussi les erreurs fréquentes comme faiblesses
-        if (stats.frequentErrors && stats.frequentErrors.length > 0) {
-            for (const err of stats.frequentErrors) {
-                if (err.count >= 2) {
-                    weakAreas.push({
-                        type: 'frequent',
-                        value: err.question,
-                        successRate: 0,
-                        label: `"${err.question}" (${err.count} erreurs)`,
-                        correct: 0,
-                        wrong: err.count
-                    });
-                }
-            }
-        }
-
         return weakAreas.sort((a, b) => a.successRate - b.successRate);
     }
 
