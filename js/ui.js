@@ -2488,7 +2488,7 @@ class UIManager {
                 e.stopPropagation();
 
                 const now = Date.now();
-                if (now - lastTap < 100) return;
+                if (now - lastTap < 300) return;
                 lastTap = now;
 
                 const value = btn.dataset.value;
@@ -2504,6 +2504,11 @@ class UIManager {
                     }
                 } else if (value === 'backspace') {
                     activeInput.value = activeInput.value.slice(0, -1);
+                    if (activeInput !== this.answerInput) {
+                        this.answerInput.value = activeInput.value;
+                    }
+                    // Dispatch input event to trigger auto-validate via the same path as desktop
+                    this.answerInput.dispatchEvent(new Event('input'));
                 } else if (value === '-') {
                     if (activeInput.value === '') {
                         activeInput.value = '-';
@@ -2514,8 +2519,8 @@ class UIManager {
                     if (activeInput !== this.answerInput) {
                         this.answerInput.value = activeInput.value;
                     }
-                    // Try auto-validate
-                    this.tryAutoValidate(this.onSubmitAnswer);
+                    // Dispatch input event to trigger auto-validate via the same path as desktop
+                    this.answerInput.dispatchEvent(new Event('input'));
                 }
             };
         };
