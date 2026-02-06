@@ -29,27 +29,26 @@ class Asteroid {
         this.x = options.x !== undefined ? options.x : Math.random() * (canvasWidth - this.size * 2) + this.size;
         this.y = options.y !== undefined ? options.y : -this.size;
 
-        // Vitesse selon difficulté
-        // Les vitesses sont normalisées par rapport à une hauteur de référence de 1080px
-        // pour que la difficulté soit identique quelle que soit la taille de l'écran
-        const REFERENCE_HEIGHT = 1080;
-        const heightRatio = canvasHeight / REFERENCE_HEIGHT;
-        const speeds = {
-            easy: 0.7,
-            medium: 1.3,
-            hard: 2.2
-        };
-        this.baseSpeed = (speeds[difficulty] || speeds.medium) * heightRatio;
-        this.speed = this.baseSpeed;
+        // Temps cible en secondes par difficulté
+        const travelTimes = { easy: 12, medium: 7, hard: 4 };
+        this.targetTravelTime = travelTimes[difficulty] || travelTimes.medium;
 
-        // Calculer la direction vers la Terre (centre-bas de l'écran)
+        // Zone terre proportionnelle
+        const REFERENCE_HEIGHT = 1080;
+        this.earthMargin = 120 * (canvasHeight / REFERENCE_HEIGHT);
+
+        // Direction vers la Terre (centre-bas de l'écran)
         this.targetX = canvasWidth / 2;
-        this.targetY = canvasHeight;
+        this.targetY = canvasHeight - this.earthMargin;
         const dx = this.targetX - this.x;
         const dy = this.targetY - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        this.velocityX = (dx / distance) * this.baseSpeed;
-        this.velocityY = (dy / distance) * this.baseSpeed;
+        const totalDistance = Math.sqrt(dx * dx + dy * dy);
+
+        // Vitesse = distance / (temps * 60 frames/s)
+        this.baseSpeed = totalDistance / (this.targetTravelTime * 60);
+        this.speed = this.baseSpeed;
+        this.velocityX = (dx / totalDistance) * this.baseSpeed;
+        this.velocityY = (dy / totalDistance) * this.baseSpeed;
 
         // Animation de rotation (réduite pour être plus fluide)
         this.rotation = 0;
@@ -76,6 +75,9 @@ class Asteroid {
         this.repulsionEndTime = 0;
         this.originalVelocityX = this.velocityX;
         this.originalVelocityY = this.velocityY;
+
+        // Slowdown (powerup ralentissement)
+        this.slowdownFactor = 1;
     }
 
     /**
@@ -105,6 +107,32 @@ class Asteroid {
         }
         this.originalVelocityX = this.velocityX;
         this.originalVelocityY = this.velocityY;
+    }
+
+    /**
+     * Applique un ralentissement
+     * @param {number} factor - Facteur de ralentissement (ex: 0.5)
+     */
+    applySlowdown(factor) {
+        if (this.slowdownFactor !== 1) return; // Déjà ralenti
+        this.slowdownFactor = factor;
+        this.velocityX *= factor;
+        this.velocityY *= factor;
+        this.originalVelocityX *= factor;
+        this.originalVelocityY *= factor;
+    }
+
+    /**
+     * Retire le ralentissement
+     */
+    removeSlowdown() {
+        if (this.slowdownFactor === 1) return;
+        const inverseFactor = 1 / this.slowdownFactor;
+        this.velocityX *= inverseFactor;
+        this.velocityY *= inverseFactor;
+        this.originalVelocityX *= inverseFactor;
+        this.originalVelocityY *= inverseFactor;
+        this.slowdownFactor = 1;
     }
 
     /**
@@ -155,7 +183,7 @@ class Asteroid {
         this.rotation += this.rotationSpeed * deltaTime;
 
         // Verifier si touche la zone de la Terre (bas de l'ecran)
-        const earthZone = this.canvasHeight - 120;
+        const earthZone = this.canvasHeight - this.earthMargin;
         if (this.y + this.size > earthZone) {
             return true;
         }
@@ -358,22 +386,29 @@ class Asteroid {
      * @param {string} difficulty - Niveau de difficulté
      * @returns {Asteroid[]} - Les 2 fragments créés
      */
-    createFragments(operationConfig, difficulty) {
+    createFragments(operationConfig, difficulty, existingAnswers = new Set()) {
         const fragments = [];
+        const usedAnswers = new Set(existingAnswers);
         for (let i = 0; i < 2; i++) {
-            const fragment = new Asteroid(
-                this.canvasWidth,
-                this.canvasHeight,
-                operationConfig,
-                difficulty,
-                {
-                    x: this.x + (i === 0 ? -30 : 30),
-                    y: this.y,
-                    size: this.size * 0.6,
-                    canSplit: false,
-                    isFragment: true
-                }
-            );
+            let fragment;
+            let attempts = 0;
+            do {
+                fragment = new Asteroid(
+                    this.canvasWidth,
+                    this.canvasHeight,
+                    operationConfig,
+                    difficulty,
+                    {
+                        x: this.x + (i === 0 ? -30 : 30),
+                        y: this.y,
+                        size: this.size * 0.6,
+                        canSplit: false,
+                        isFragment: true
+                    }
+                );
+                attempts++;
+            } while (usedAnswers.has(fragment.answer) && attempts < 50);
+            usedAnswers.add(fragment.answer);
             fragments.push(fragment);
         }
         return fragments;

@@ -249,10 +249,26 @@
                                     </svg>
                                 </button>
                             </div>
-                            <label class="mode-checkbox compact">
+                            <label class="mode-checkbox compact" title="Les astéroïdes se divisent en 2 fragments quand ils sont détruits">
                                 <input type="checkbox" id="split-mode">
                                 <span>Séparation</span>
                             </label>
+                            <label class="mode-checkbox compact" title="Les astéroïdes apparaissent en continu sans attendre">
+                                <input type="checkbox" id="armageddon-mode">
+                                <span>Armageddon</span>
+                            </label>
+                            <div id="armageddon-options" class="armageddon-options hidden">
+                                <div class="armageddon-levels">
+                                    <button class="armageddon-level-btn active" data-level="1">1</button>
+                                    <button class="armageddon-level-btn" data-level="2">2</button>
+                                    <button class="armageddon-level-btn" data-level="3">3</button>
+                                </div>
+                                <span class="armageddon-desc" id="armageddon-desc">Spawn modéré</span>
+                            </div>
+                        </div>
+                        <div class="mode-descriptions">
+                            <p class="mode-desc" id="split-desc"><strong>Séparation :</strong> Chaque astéroïde détruit se divise en 2 fragments plus petits avec de nouveaux calculs.</p>
+                            <p class="mode-desc" id="armageddon-desc-full"><strong>Armageddon :</strong> Les astéroïdes arrivent en continu sans attendre. Niveau 1 = modéré, 2 = intense, 3 = chaos total.</p>
                         </div>
                     </div>
 
@@ -301,6 +317,11 @@
                 <div id="progress-display" class="mode-display hidden">☄️ <span id="progress">0/20</span></div>
             </div>
             <div class="hud-right">
+                <button id="numpad-toggle-btn" class="icon-btn hidden" title="Clavier">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>
+                    </svg>
+                </button>
                 <button id="pause-btn" class="icon-btn" title="Pause">
                     <svg viewBox="0 0 24 24" width="24" height="24">
                         <path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
@@ -322,6 +343,41 @@
                 </svg>
             </button>
         </div>
+
+        <div id="custom-numpad" class="custom-numpad hidden">
+            <div class="numpad-drag-handle" id="numpad-drag-handle">
+                <span class="drag-dots">&#8942;&#8942;</span>
+            </div>
+            <div class="numpad-row">
+                <button class="numpad-btn" data-value="1">1</button>
+                <button class="numpad-btn" data-value="2">2</button>
+                <button class="numpad-btn" data-value="3">3</button>
+            </div>
+            <div class="numpad-row">
+                <button class="numpad-btn" data-value="4">4</button>
+                <button class="numpad-btn" data-value="5">5</button>
+                <button class="numpad-btn" data-value="6">6</button>
+            </div>
+            <div class="numpad-row">
+                <button class="numpad-btn" data-value="7">7</button>
+                <button class="numpad-btn" data-value="8">8</button>
+                <button class="numpad-btn" data-value="9">9</button>
+            </div>
+            <div class="numpad-row">
+                <button class="numpad-btn" data-value="-">-</button>
+                <button class="numpad-btn" data-value="0">0</button>
+                <button class="numpad-btn numpad-delete" data-value="backspace">&#9003;</button>
+            </div>
+            <div class="numpad-row">
+                <button class="numpad-btn numpad-submit" data-value="submit">Envoyer</button>
+            </div>
+        </div>
+
+        <button id="powerup-activate-btn" class="powerup-activate-btn hidden">
+            <svg viewBox="0 0 24 24" width="28" height="28">
+                <path fill="currentColor" d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6z"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Écran Game Over -->

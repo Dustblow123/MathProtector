@@ -3215,3 +3215,380 @@ body {
         height: 200px;
     }
 }
+
+/* ====================== */
+/* NUMPAD MOBILE           */
+/* ====================== */
+
+.custom-numpad {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 280px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 4px 6px;
+    z-index: 20;
+    border-top: 2px solid rgba(79, 195, 247, 0.3);
+    border-radius: 10px 10px 0 0;
+    touch-action: none;
+}
+
+.custom-numpad.dragging {
+    border-radius: 10px;
+    border: 2px solid rgba(79, 195, 247, 0.3);
+}
+
+.numpad-drag-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 18px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    color: rgba(79, 195, 247, 0.5);
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.numpad-drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-dots {
+    pointer-events: none;
+}
+
+.numpad-row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 3px;
+}
+
+.numpad-row:last-child {
+    margin-bottom: 0;
+}
+
+.numpad-btn {
+    flex: 1;
+    max-width: 70px;
+    height: 34px;
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    background: rgba(10, 10, 30, 0.8);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.numpad-btn:active {
+    background: rgba(79, 195, 247, 0.3);
+    border-color: var(--primary);
+    transform: scale(0.95);
+}
+
+.numpad-delete {
+    background: rgba(255, 82, 82, 0.15);
+    border-color: rgba(255, 82, 82, 0.4);
+    color: var(--danger);
+}
+
+.numpad-delete:active {
+    background: rgba(255, 82, 82, 0.3);
+}
+
+.numpad-submit {
+    max-width: 100%;
+    height: 30px;
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.3), rgba(105, 240, 174, 0.3));
+    border-color: var(--primary);
+    color: var(--primary);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.numpad-submit:active {
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.5), rgba(105, 240, 174, 0.5));
+}
+
+/* Repositionner l'input au-dessus du numpad */
+.has-numpad #answer-container {
+    bottom: 160px !important;
+}
+
+/* Bouton toggle numpad dans le HUD */
+#numpad-toggle-btn.active {
+    background: rgba(79, 195, 247, 0.3);
+    color: var(--primary);
+}
+
+/* Bouton activation power-up (visible quand numpad actif) */
+.powerup-activate-btn {
+    position: absolute;
+    bottom: 170px;
+    left: calc(50% + 120px);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: rgba(79, 195, 247, 0.25);
+    color: var(--primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    cursor: pointer;
+    animation: powerupPulse 1.5s ease-in-out infinite;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+}
+
+.powerup-activate-btn:active {
+    transform: scale(0.9);
+    background: rgba(124, 77, 255, 0.5);
+}
+
+/* ====================== */
+/* NOUVEAUX POWER-UPS     */
+/* ====================== */
+
+/* Icône extralife */
+.powerup-icon.extralife {
+    background: radial-gradient(circle, rgba(255, 64, 129, 0.3), rgba(197, 17, 98, 0.5));
+    border: 3px solid #ff4081;
+    box-shadow: 0 0 20px rgba(255, 64, 129, 0.6), inset 0 0 15px rgba(255, 64, 129, 0.3);
+}
+
+.powerup-collected.extralife {
+    color: #ff4081;
+    border: 2px solid #ff4081;
+}
+
+/* Icône multishot */
+.powerup-icon.multishot {
+    background: radial-gradient(circle, rgba(255, 215, 64, 0.3), rgba(255, 111, 0, 0.5));
+    border: 3px solid #ffd740;
+    box-shadow: 0 0 20px rgba(255, 215, 64, 0.6), inset 0 0 15px rgba(255, 215, 64, 0.3);
+}
+
+.powerup-collected.multishot {
+    color: #ffd740;
+    border: 2px solid #ffd740;
+}
+
+/* Icône slowdown */
+.powerup-icon.slowdown {
+    background: radial-gradient(circle, rgba(179, 136, 255, 0.3), rgba(98, 0, 234, 0.5));
+    border: 3px solid #b388ff;
+    box-shadow: 0 0 20px rgba(179, 136, 255, 0.6), inset 0 0 15px rgba(179, 136, 255, 0.3);
+}
+
+.powerup-collected.slowdown {
+    color: #b388ff;
+    border: 2px solid #b388ff;
+}
+
+/* Overlay multishot (doré) */
+.multishot-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(255, 215, 64, 0.1) 0%, rgba(255, 111, 0, 0.05) 50%, transparent 80%);
+    border: 2px solid rgba(255, 215, 64, 0.2);
+    pointer-events: none;
+    z-index: 3;
+    animation: freezeAppear 0.5s ease-out forwards;
+}
+
+.multishot-overlay.fading {
+    animation: freezeFade 0.5s ease-out forwards;
+}
+
+/* Overlay slowdown (violet) */
+.slowdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(179, 136, 255, 0.12) 0%, rgba(98, 0, 234, 0.06) 50%, transparent 80%);
+    border: 2px solid rgba(179, 136, 255, 0.2);
+    pointer-events: none;
+    z-index: 3;
+    animation: freezeAppear 0.5s ease-out forwards;
+}
+
+.slowdown-overlay.fading {
+    animation: freezeFade 0.5s ease-out forwards;
+}
+
+/* ====================== */
+/* EFFET REPULSEUR V2     */
+/* ====================== */
+
+.repulsor-container {
+    position: absolute;
+    pointer-events: none;
+    z-index: 6;
+    transform: translate(-50%, -50%);
+}
+
+.repulsor-wave-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(255, 152, 0, 0.8);
+    border-radius: 50%;
+    animation: repulsorRingExpand 0.8s ease-out forwards;
+}
+
+@keyframes repulsorRingExpand {
+    0% {
+        width: 20px;
+        height: 20px;
+        opacity: 1;
+        border-width: 4px;
+    }
+    100% {
+        width: 700px;
+        height: 700px;
+        opacity: 0;
+        border-width: 1px;
+    }
+}
+
+.repulsor-center-flash {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 100, 0.9) 0%, rgba(255, 152, 0, 0.6) 40%, transparent 70%);
+    animation: repulsorFlashAnim 0.3s ease-out forwards;
+}
+
+@keyframes repulsorFlashAnim {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(3);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(3.5);
+    }
+}
+
+.repulsor-particle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: repulsorParticleFly 0.6s ease-out forwards;
+}
+
+@keyframes repulsorParticleFly {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0);
+    }
+}
+
+.repulsor-shake {
+    animation: repulsorShakeAnim 0.4s ease-out !important;
+}
+
+@keyframes repulsorShakeAnim {
+    0% { transform: translate(0, 0); }
+    10% { transform: translate(-5px, 3px); }
+    20% { transform: translate(5px, -3px); }
+    30% { transform: translate(-4px, -2px); }
+    40% { transform: translate(4px, 2px); }
+    50% { transform: translate(-3px, 1px); }
+    60% { transform: translate(3px, -1px); }
+    70% { transform: translate(-2px, 1px); }
+    80% { transform: translate(2px, -1px); }
+    90% { transform: translate(-1px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+/* ====================== ARMAGEDDON MODE ====================== */
+
+.armageddon-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 4px 0;
+}
+
+.armageddon-levels {
+    display: flex;
+    gap: 4px;
+}
+
+.armageddon-level-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 82, 82, 0.5);
+    background: rgba(255, 82, 82, 0.1);
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.armageddon-level-btn.active {
+    background: rgba(255, 82, 82, 0.4);
+    border-color: var(--danger);
+    box-shadow: 0 0 8px rgba(255, 82, 82, 0.3);
+}
+
+.armageddon-desc {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.mode-descriptions {
+    margin-top: 6px;
+    padding: 0 4px;
+}
+
+.mode-desc {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 2px 0;
+    line-height: 1.3;
+    display: none;
+}
+
+.mode-desc.visible {
+    display: block;
+}

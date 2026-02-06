@@ -10,12 +10,12 @@ class PowerUp {
      * @param {string} difficulty - Niveau de difficulte
      * @param {string} type - Type de powerup (shield, freeze, repulsor)
      */
-    constructor(canvasWidth, canvasHeight, operationConfig, difficulty, type = null) {
+    constructor(canvasWidth, canvasHeight, operationConfig, difficulty, type = null, availableTypes = null) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
 
-        // Type de powerup (aleatoire si non specifie)
-        const types = ['shield', 'freeze', 'repulsor'];
+        // Type de powerup (aleatoire parmi les types disponibles si non specifie)
+        const types = availableTypes || ['shield', 'freeze', 'repulsor', 'extralife', 'slowdown'];
         this.type = type || types[Math.floor(Math.random() * types.length)];
 
         // Generer la question via QuestionGenerator
@@ -32,25 +32,25 @@ class PowerUp {
         this.x = Math.random() * (canvasWidth - this.size * 2) + this.size;
         this.y = -this.size;
 
-        // Vitesse (un peu plus lent que les asteroides)
-        // Normalisée par rapport à une hauteur de référence de 1080px
+        // Temps cible en secondes (un peu plus lent que les astéroïdes)
+        const travelTimes = { easy: 14, medium: 9, hard: 5 };
+        this.targetTravelTime = travelTimes[difficulty] || travelTimes.medium;
+
+        // Zone terre proportionnelle
         const REFERENCE_HEIGHT = 1080;
-        const heightRatio = canvasHeight / REFERENCE_HEIGHT;
-        const speeds = {
-            easy: 0.5,
-            medium: 0.85,
-            hard: 1.5
-        };
-        this.baseSpeed = (speeds[difficulty] || speeds.medium) * heightRatio;
+        this.earthMargin = 120 * (canvasHeight / REFERENCE_HEIGHT);
 
         // Direction vers la Terre
         this.targetX = canvasWidth / 2;
-        this.targetY = canvasHeight;
+        this.targetY = canvasHeight - this.earthMargin;
         const dx = this.targetX - this.x;
         const dy = this.targetY - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        this.velocityX = (dx / distance) * this.baseSpeed;
-        this.velocityY = (dy / distance) * this.baseSpeed;
+        const totalDistance = Math.sqrt(dx * dx + dy * dy);
+
+        // Vitesse = distance / (temps * 60 frames/s)
+        this.baseSpeed = totalDistance / (this.targetTravelTime * 60);
+        this.velocityX = (dx / totalDistance) * this.baseSpeed;
+        this.velocityY = (dy / totalDistance) * this.baseSpeed;
 
         // Animation
         this.rotation = 0;
@@ -88,6 +88,24 @@ class PowerUp {
                     secondary: '#e65100',
                     glow: 'rgba(255, 152, 0, 0.5)'
                 };
+            case 'extralife':
+                return {
+                    primary: '#ff4081',
+                    secondary: '#c51162',
+                    glow: 'rgba(255, 64, 129, 0.5)'
+                };
+            case 'multishot':
+                return {
+                    primary: '#ffd740',
+                    secondary: '#ff6f00',
+                    glow: 'rgba(255, 215, 64, 0.5)'
+                };
+            case 'slowdown':
+                return {
+                    primary: '#b388ff',
+                    secondary: '#6200ea',
+                    glow: 'rgba(179, 136, 255, 0.5)'
+                };
             default:
                 return {
                     primary: '#ffffff',
@@ -116,7 +134,7 @@ class PowerUp {
         this.pulsePhase += deltaTime * 0.005;
 
         // Verifier si touche la zone de la Terre
-        const earthZone = this.canvasHeight - 120;
+        const earthZone = this.canvasHeight - this.earthMargin;
         if (this.y + this.size > earthZone) {
             return true; // PowerUp perdu
         }
@@ -246,6 +264,55 @@ class PowerUp {
                 ctx.fillStyle = '#ffffff';
                 ctx.fill();
                 break;
+
+            case 'extralife':
+                // Coeur
+                ctx.beginPath();
+                ctx.moveTo(0, iconSize * 0.3);
+                ctx.bezierCurveTo(-iconSize, -iconSize * 0.3, -iconSize * 0.5, -iconSize, 0, -iconSize * 0.4);
+                ctx.bezierCurveTo(iconSize * 0.5, -iconSize, iconSize, -iconSize * 0.3, 0, iconSize * 0.3);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 64, 129, 0.6)';
+                ctx.fill();
+                ctx.stroke();
+                break;
+
+            case 'multishot':
+                // Éclair
+                ctx.beginPath();
+                ctx.moveTo(-iconSize * 0.2, -iconSize);
+                ctx.lineTo(iconSize * 0.1, -iconSize * 0.15);
+                ctx.lineTo(-iconSize * 0.05, -iconSize * 0.15);
+                ctx.lineTo(iconSize * 0.2, iconSize);
+                ctx.lineTo(-iconSize * 0.1, iconSize * 0.15);
+                ctx.lineTo(iconSize * 0.05, iconSize * 0.15);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 215, 64, 0.6)';
+                ctx.fill();
+                ctx.stroke();
+                break;
+
+            case 'slowdown':
+                // Horloge (cercle + aiguilles)
+                ctx.beginPath();
+                ctx.arc(0, 0, iconSize * 0.8, 0, Math.PI * 2);
+                ctx.stroke();
+                // Aiguille des heures
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -iconSize * 0.5);
+                ctx.stroke();
+                // Aiguille des minutes
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(iconSize * 0.4, 0);
+                ctx.stroke();
+                // Point central
+                ctx.beginPath();
+                ctx.arc(0, 0, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                break;
         }
     }
 
@@ -305,6 +372,9 @@ class PowerUp {
             case 'shield': return '\u{1F6E1}'; // Bouclier
             case 'freeze': return '\u{2744}';  // Flocon
             case 'repulsor': return '\u{1F4A5}'; // Explosion
+            case 'extralife': return '\u{2764}'; // Coeur
+            case 'multishot': return '\u{26A1}'; // Éclair
+            case 'slowdown': return '\u{1F570}'; // Horloge
             default: return '\u{2728}';
         }
     }
@@ -317,6 +387,9 @@ class PowerUp {
             case 'shield': return 'Bouclier';
             case 'freeze': return 'Gel';
             case 'repulsor': return 'Repulseur';
+            case 'extralife': return 'Vie bonus';
+            case 'multishot': return 'Multi-tir';
+            case 'slowdown': return 'Ralenti';
             default: return 'PowerUp';
         }
     }

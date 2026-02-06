@@ -41,6 +41,12 @@ class UIManager {
         // Mode séparation
         this.splitModeCheckbox = document.getElementById('split-mode');
 
+        // Mode armageddon
+        this.armageddonModeCheckbox = document.getElementById('armageddon-mode');
+        this.armageddonOptions = document.getElementById('armageddon-options');
+        this.armageddonLevelBtns = document.querySelectorAll('.armageddon-level-btn');
+        this.armageddonDescEl = document.getElementById('armageddon-desc');
+
         // Éléments profils
         this.playerSelectorBtn = document.getElementById('open-player-panel');
         this.currentPlayerAvatar = document.getElementById('current-player-avatar');
@@ -166,6 +172,8 @@ class UIManager {
         this.powerUpIcon = null;
         this.shieldBubble = null;
         this.freezeOverlay = null;
+        this.multishotOverlay = null;
+        this.slowdownOverlay = null;
     }
 
     /**
@@ -281,8 +289,35 @@ class UIManager {
         if (this.splitModeCheckbox) {
             this.splitModeCheckbox.addEventListener('change', () => {
                 callbacks.onToggleSplitMode(this.splitModeCheckbox.checked);
+                this.updateModeDescriptions();
             });
         }
+
+        // Mode armageddon
+        if (this.armageddonModeCheckbox) {
+            this.armageddonModeCheckbox.addEventListener('change', () => {
+                const enabled = this.armageddonModeCheckbox.checked;
+                callbacks.onToggleArmageddonMode(enabled);
+                if (this.armageddonOptions) {
+                    this.armageddonOptions.classList.toggle('hidden', !enabled);
+                }
+                this.updateModeDescriptions();
+            });
+        }
+
+        // Niveaux armageddon
+        const armageddonDescs = { 1: 'Spawn modéré', 2: 'Spawn intense', 3: 'Chaos total !' };
+        this.armageddonLevelBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.armageddonLevelBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const level = parseInt(btn.dataset.level);
+                callbacks.onSetArmageddonLevel(level);
+                if (this.armageddonDescEl) {
+                    this.armageddonDescEl.textContent = armageddonDescs[level];
+                }
+            });
+        });
 
         // Sélection mode de jeu
         this.gamemodeBtns.forEach(btn => {
@@ -1771,11 +1806,14 @@ class UIManager {
         this.powerUpIcon.className = `powerup-icon ${type}`;
         this.powerUpIcon.innerHTML = this.getPowerUpIconSVG(type);
 
-        // Ajouter l'indication "Espace"
-        const hint = document.createElement('div');
-        hint.className = 'powerup-icon-hint';
-        hint.textContent = '[Espace]';
-        this.powerUpIcon.appendChild(hint);
+        // Ajouter l'indication (Espace sur desktop, rien sur mobile car bouton dédié)
+        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isMobile) {
+            const hint = document.createElement('div');
+            hint.className = 'powerup-icon-hint';
+            hint.textContent = '[Espace]';
+            this.powerUpIcon.appendChild(hint);
+        }
 
         this.gameScreen.appendChild(this.powerUpIcon);
     }
@@ -1798,6 +1836,18 @@ class UIManager {
             case 'repulsor':
                 return `<svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>`;
+            case 'extralife':
+                return `<svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>`;
+            case 'multishot':
+                return `<svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+                </svg>`;
+            case 'slowdown':
+                return `<svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
                 </svg>`;
             default:
                 return '';
@@ -1876,15 +1926,58 @@ class UIManager {
      * @param {number} y - Position Y du centre
      */
     createRepulsorEffect(x, y) {
-        const wave = document.createElement('div');
-        wave.className = 'repulsor-wave';
-        wave.style.left = (x - 25) + 'px';
-        wave.style.top = (y - 25) + 'px';
-        this.gameScreen.appendChild(wave);
+        const container = document.createElement('div');
+        container.className = 'repulsor-container';
+        container.style.left = x + 'px';
+        container.style.top = y + 'px';
+
+        // 3 anneaux concentriques avec délai décalé
+        for (let i = 0; i < 3; i++) {
+            const ring = document.createElement('div');
+            ring.className = 'repulsor-wave-ring';
+            ring.style.animationDelay = (i * 0.15) + 's';
+            ring.style.borderColor = `rgba(255, ${152 + i * 30}, ${i * 40}, ${0.8 - i * 0.15})`;
+            container.appendChild(ring);
+        }
+
+        // Flash central
+        const flash = document.createElement('div');
+        flash.className = 'repulsor-center-flash';
+        container.appendChild(flash);
+
+        // 24 particules projetées radialement
+        const particleColors = ['#ff9800', '#ffd740', '#ffffff', '#ff5722', '#ffab40'];
+        for (let i = 0; i < 24; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'repulsor-particle';
+            particle.style.backgroundColor = particleColors[Math.floor(Math.random() * particleColors.length)];
+
+            const angle = (i / 24) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+            const distance = 120 + Math.random() * 180;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            const size = 4 + Math.random() * 6;
+
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.setProperty('--tx', tx + 'px');
+            particle.style.setProperty('--ty', ty + 'px');
+            particle.style.animationDelay = (Math.random() * 0.1) + 's';
+
+            container.appendChild(particle);
+        }
+
+        this.gameScreen.appendChild(container);
+
+        // Screen shake
+        this.gameScreen.classList.add('repulsor-shake');
+        setTimeout(() => {
+            this.gameScreen.classList.remove('repulsor-shake');
+        }, 400);
 
         setTimeout(() => {
-            wave.remove();
-        }, 800);
+            container.remove();
+        }, 1000);
     }
 
     /**
@@ -1902,6 +1995,9 @@ class UIManager {
             case 'shield': typeName = 'Bouclier'; break;
             case 'freeze': typeName = 'Gel'; break;
             case 'repulsor': typeName = 'Repulseur'; break;
+            case 'extralife': typeName = 'Vie bonus'; break;
+            case 'multishot': typeName = 'Multi-tir'; break;
+            case 'slowdown': typeName = 'Ralenti'; break;
             default: typeName = 'PowerUp';
         }
 
@@ -2068,17 +2164,25 @@ class UIManager {
         // Construire la configuration d'entraînement
         const tables = [];
         let operationType = 'combined';
+        let hasFrequent = false;
 
         this.selectedWeakAreas.forEach(area => {
             if (area.type === 'table') {
                 tables.push(parseInt(area.value));
             } else if (area.type === 'operation') {
                 operationType = area.value;
+            } else if (area.type === 'frequent') {
+                hasFrequent = true;
             }
         });
 
         // Si on a des tables, on utilise multiplication/division
         if (tables.length > 0 && operationType === 'combined') {
+            operationType = 'multiplication';
+        }
+
+        // Si uniquement des erreurs fréquentes et rien d'autre, utiliser le mode combiné
+        if (hasFrequent && tables.length === 0 && operationType === 'combined') {
             operationType = 'multiplication';
         }
 
@@ -2258,6 +2362,269 @@ class UIManager {
             this.renderStatsChart(stats, 'tables');
             this.renderFrequentErrors(stats.frequentErrors);
         }
+    }
+    // ====================== NUMPAD MOBILE ======================
+
+    /**
+     * Initialise le numpad custom pour mobile
+     */
+    initCustomNumpad() {
+        const numpad = document.getElementById('custom-numpad');
+        if (!numpad) return;
+
+        const buttons = numpad.querySelectorAll('.numpad-btn');
+        buttons.forEach(btn => {
+            let lastTap = 0;
+            const handler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Éviter le double-fire touchstart + click
+                const now = Date.now();
+                if (now - lastTap < 100) return;
+                lastTap = now;
+
+                const value = btn.dataset.value;
+
+                if (value === 'submit') {
+                    this.submitBtn.click();
+                } else if (value === 'backspace') {
+                    this.answerInput.value = this.answerInput.value.slice(0, -1);
+                } else if (value === '-') {
+                    // Le signe moins uniquement en début de chaîne
+                    if (this.answerInput.value === '') {
+                        this.answerInput.value = '-';
+                    }
+                } else {
+                    // Chiffres 0-9
+                    this.answerInput.value += value;
+                }
+            };
+
+            btn.addEventListener('touchstart', handler, { passive: false });
+            btn.addEventListener('click', handler);
+        });
+
+        // Drag du numpad via le handle
+        this.initNumpadDrag(numpad);
+    }
+
+    initNumpadDrag(numpad) {
+        const handle = document.getElementById('numpad-drag-handle');
+        if (!handle) return;
+
+        let isDragging = false;
+        let startX, startY, initialLeft, initialBottom;
+        let hasMoved = false;
+
+        const getPos = (e) => {
+            if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+        };
+
+        const onStart = (e) => {
+            isDragging = true;
+            hasMoved = false;
+            const pos = getPos(e);
+            startX = pos.x;
+            startY = pos.y;
+
+            const rect = numpad.getBoundingClientRect();
+            const parentRect = numpad.parentElement.getBoundingClientRect();
+            initialLeft = rect.left - parentRect.left;
+            initialBottom = parentRect.bottom - rect.bottom;
+
+            // Passer en position libre (pas centré)
+            numpad.style.left = initialLeft + 'px';
+            numpad.style.bottom = initialBottom + 'px';
+            numpad.style.transform = 'none';
+            numpad.classList.add('dragging');
+
+            e.preventDefault();
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            const dx = pos.x - startX;
+            const dy = pos.y - startY;
+
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+            if (!hasMoved) return;
+
+            const parentRect = numpad.parentElement.getBoundingClientRect();
+            let newLeft = initialLeft + dx;
+            let newBottom = initialBottom - dy;
+
+            // Limites
+            const numpadWidth = numpad.offsetWidth;
+            const numpadHeight = numpad.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, parentRect.width - numpadWidth));
+            newBottom = Math.max(0, Math.min(newBottom, parentRect.height - numpadHeight));
+
+            numpad.style.left = newLeft + 'px';
+            numpad.style.bottom = newBottom + 'px';
+        };
+
+        const onEnd = () => {
+            isDragging = false;
+            numpad.classList.remove('dragging');
+        };
+
+        handle.addEventListener('touchstart', onStart, { passive: false });
+        handle.addEventListener('mousedown', onStart);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchend', onEnd);
+        document.addEventListener('mouseup', onEnd);
+    }
+
+    /**
+     * Met à jour l'affichage des descriptions des modes
+     */
+    updateModeDescriptions() {
+        const splitDesc = document.getElementById('split-desc');
+        const armageddonDesc = document.getElementById('armageddon-desc-full');
+        if (splitDesc) {
+            splitDesc.classList.toggle('visible', this.splitModeCheckbox && this.splitModeCheckbox.checked);
+        }
+        if (armageddonDesc) {
+            armageddonDesc.classList.toggle('visible', this.armageddonModeCheckbox && this.armageddonModeCheckbox.checked);
+        }
+    }
+
+    /**
+     * Affiche le numpad custom
+     */
+    showNumpad() {
+        this.numpadVisible = true;
+        const numpad = document.getElementById('custom-numpad');
+        if (numpad) {
+            numpad.classList.remove('hidden');
+            this.gameScreen.classList.add('has-numpad');
+        }
+        // Afficher le bouton toggle dans le HUD
+        const toggleBtn = document.getElementById('numpad-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('hidden');
+            toggleBtn.classList.add('active');
+        }
+        // Afficher le bouton d'activation powerup mobile
+        const activateBtn = document.getElementById('powerup-activate-btn');
+        if (activateBtn) {
+            activateBtn.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Cache le numpad custom (complètement, fin de partie)
+     */
+    hideNumpad() {
+        this.numpadVisible = false;
+        const numpad = document.getElementById('custom-numpad');
+        if (numpad) {
+            numpad.classList.add('hidden');
+        }
+        if (this.gameScreen) {
+            this.gameScreen.classList.remove('has-numpad');
+        }
+        const activateBtn = document.getElementById('powerup-activate-btn');
+        if (activateBtn) {
+            activateBtn.classList.add('hidden');
+        }
+        const toggleBtn = document.getElementById('numpad-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Toggle le numpad (en jeu)
+     */
+    toggleNumpad() {
+        const numpad = document.getElementById('custom-numpad');
+        if (!numpad) return;
+
+        const isVisible = !numpad.classList.contains('hidden');
+        const toggleBtn = document.getElementById('numpad-toggle-btn');
+        const activateBtn = document.getElementById('powerup-activate-btn');
+        const isMobile = ('ontouchstart' in window) && window.innerWidth <= 768;
+
+        if (isVisible) {
+            numpad.classList.add('hidden');
+            this.gameScreen.classList.remove('has-numpad');
+            if (toggleBtn) toggleBtn.classList.remove('active');
+            if (activateBtn) activateBtn.classList.add('hidden');
+            // Quand on cache le numpad, enlever readOnly pour permettre le clavier natif
+            if (this.answerInput) this.answerInput.readOnly = false;
+            this.focusInput();
+        } else {
+            numpad.classList.remove('hidden');
+            this.gameScreen.classList.add('has-numpad');
+            if (toggleBtn) toggleBtn.classList.add('active');
+            if (activateBtn) activateBtn.classList.remove('hidden');
+            // Sur mobile, bloquer le clavier natif quand numpad visible
+            if (isMobile && this.answerInput) this.answerInput.readOnly = true;
+        }
+    }
+
+    // ====================== NOUVEAUX POWER-UPS ======================
+
+    /**
+     * Affiche l'overlay multishot
+     */
+    showMultishotOverlay() {
+        if (this.multishotOverlay) return;
+        this.multishotOverlay = document.createElement('div');
+        this.multishotOverlay.className = 'multishot-overlay';
+        this.gameScreen.appendChild(this.multishotOverlay);
+    }
+
+    /**
+     * Cache l'overlay multishot
+     */
+    hideMultishotOverlay() {
+        if (this.multishotOverlay) {
+            this.multishotOverlay.classList.add('fading');
+            const overlay = this.multishotOverlay;
+            this.multishotOverlay = null;
+            setTimeout(() => overlay.remove(), 500);
+        }
+    }
+
+    /**
+     * Affiche l'overlay slowdown
+     */
+    showSlowdownOverlay() {
+        if (this.slowdownOverlay) return;
+        this.slowdownOverlay = document.createElement('div');
+        this.slowdownOverlay.className = 'slowdown-overlay';
+        this.gameScreen.appendChild(this.slowdownOverlay);
+    }
+
+    /**
+     * Cache l'overlay slowdown
+     */
+    hideSlowdownOverlay() {
+        if (this.slowdownOverlay) {
+            this.slowdownOverlay.classList.add('fading');
+            const overlay = this.slowdownOverlay;
+            this.slowdownOverlay = null;
+            setTimeout(() => overlay.remove(), 500);
+        }
+    }
+
+    /**
+     * Ajoute un coeur au HUD
+     */
+    addLife() {
+        if (!this.livesContainer) return;
+        const life = document.createElement('span');
+        life.className = 'life';
+        life.textContent = '❤️';
+        life.style.animation = 'perfectPop 0.5s ease-out';
+        this.livesContainer.appendChild(life);
     }
 }
 

@@ -37,6 +37,15 @@ class Game {
         // Mode separation
         this.splitMode = false;
 
+        // Mode armageddon
+        this.armageddonMode = false;
+        this.armageddonLevel = 1;
+        this.armageddonIntervals = {
+            1: { easy: 4000, medium: 3000, hard: 2000 },
+            2: { easy: 2500, medium: 1800, hard: 1200 },
+            3: { easy: 1500, medium: 1000, hard: 700 }
+        };
+
         // PowerUps
         this.activePowerUp = null;      // PowerUp actuellement a l'ecran
         this.storedPowerUp = null;      // Type de powerup stocke (string)
@@ -79,12 +88,26 @@ class Game {
         this.keyboardOpen = false;
         this.keyboardHeight = 0;
 
+        // Détection mobile (écran tactile ET petit écran = vrai mobile)
+        this.isMobile = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) && window.innerWidth <= 768;
+
+        // Nouveaux power-ups
+        this.multishotActive = false;
+        this.multishotEndTime = 0;
+        this.slowdownActive = false;
+        this.slowdownEndTime = 0;
+
+        // Flash repulseur canvas
+        this.repulsorFlash = null;
+
         // Initialisation
         this.resize();
         window.addEventListener('resize', () => this.resize());
 
-        // Initialiser le gestionnaire de clavier mobile
-        this.initMobileKeyboardHandler();
+        // Initialiser le gestionnaire de clavier mobile (sauf si numpad custom)
+        if (!this.isMobile) {
+            this.initMobileKeyboardHandler();
+        }
 
         // Initialiser l'UI
         this.initUI();
@@ -103,7 +126,9 @@ class Game {
             onToggleMusic: () => audioManager.toggleMusic(),
             onToggleSound: () => audioManager.toggleSound(),
             onToggleAll: () => audioManager.toggleAll(),
-            onToggleSplitMode: (enabled) => this.splitMode = enabled
+            onToggleSplitMode: (enabled) => this.splitMode = enabled,
+            onToggleArmageddonMode: (enabled) => this.armageddonMode = enabled,
+            onSetArmageddonLevel: (level) => this.armageddonLevel = level
         });
 
         // Event listener pour la touche Espace (activation powerup)
@@ -113,6 +138,31 @@ class Game {
                 this.activatePowerUp();
             }
         });
+
+        // Bouton activation powerup mobile
+        const powerupActivateBtn = document.getElementById('powerup-activate-btn');
+        if (powerupActivateBtn) {
+            powerupActivateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.isRunning && !this.isPaused) {
+                    this.activatePowerUp();
+                }
+            });
+        }
+
+        // Initialiser le numpad custom (toujours, le toggle est dispo pour tous)
+        ui.initCustomNumpad();
+
+        // Toggle numpad button
+        const numpadToggleBtn = document.getElementById('numpad-toggle-btn');
+        if (numpadToggleBtn) {
+            numpadToggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                ui.toggleNumpad();
+            });
+        }
 
         // Maintenir le focus sur l'input pendant le jeu
         document.addEventListener('click', (e) => {
@@ -286,12 +336,19 @@ class Game {
         this.shieldActive = false;
         this.freezeActive = false;
         this.freezeEndTime = 0;
+        this.multishotActive = false;
+        this.multishotEndTime = 0;
+        this.slowdownActive = false;
+        this.slowdownEndTime = 0;
+        this.repulsorFlash = null;
         ui.updatePowerUpIcon(null);
         ui.removeShieldEffect();
         if (ui.freezeOverlay) {
             ui.freezeOverlay.remove();
             ui.freezeOverlay = null;
         }
+        ui.hideMultishotOverlay();
+        ui.hideSlowdownOverlay();
 
         // Configurer le mode de jeu
         if (modeConfig) {
@@ -345,6 +402,17 @@ class Game {
         ui.setupModeDisplay(this.gameMode, this.remainingTime, this.targetAsteroids);
         ui.showScreen('game');
 
+        // Mobile : afficher le numpad custom automatiquement
+        if (this.isMobile) {
+            ui.answerInput.readOnly = true;
+            ui.showNumpad();
+        } else {
+            ui.answerInput.readOnly = false;
+            // Sur PC, afficher le bouton toggle (caché par défaut, numpad non affiché)
+            const toggleBtn = document.getElementById('numpad-toggle-btn');
+            if (toggleBtn) toggleBtn.classList.remove('hidden');
+        }
+
         // Démarrer le timer si mode temps
         if (this.gameMode === 'time') {
             this.startGameTimer();
@@ -392,6 +460,7 @@ class Game {
         if (this.hasWon) return;
         this.hasWon = true;
         this.isRunning = false;
+        ui.hideNumpad();
 
         // Nettoyer le timer
         if (this.gameTimer) {
@@ -479,20 +548,52 @@ class Game {
             ui.hideFreezeOverlay();
         }
 
-        // Spawn de nouveaux asteroides (sauf si gele)
-        const maxAst = this.maxAsteroids[this.difficulty];
-        const delay = this.spawnDelay[this.difficulty];
+        // Verifier fin du multishot
+        if (this.multishotActive && Date.now() >= this.multishotEndTime) {
+            this.multishotActive = false;
+            ui.hideMultishotOverlay();
+        }
 
-        if (!this.freezeActive && this.asteroids.length < maxAst && currentTime - this.lastSpawn > delay) {
-            if (this.isReviewMode) {
-                // En mode révision, utiliser les questions prédéfinies
-                if (this.reviewIndex < this.reviewQuestions.length) {
-                    this.spawnReviewAsteroid();
+        // Verifier fin du slowdown
+        if (this.slowdownActive && Date.now() >= this.slowdownEndTime) {
+            this.slowdownActive = false;
+            ui.hideSlowdownOverlay();
+            // Restaurer la vitesse de tous les astéroïdes
+            for (const asteroid of this.asteroids) {
+                asteroid.removeSlowdown();
+            }
+        }
+
+        // Spawn de nouveaux asteroides (sauf si gele)
+        if (!this.freezeActive) {
+            if (this.armageddonMode) {
+                // Mode armageddon : spawn continu à intervalles réguliers
+                const armageddonDelay = this.armageddonIntervals[this.armageddonLevel][this.difficulty];
+                if (currentTime - this.lastSpawn > armageddonDelay) {
+                    if (this.isReviewMode) {
+                        if (this.reviewIndex < this.reviewQuestions.length) {
+                            this.spawnReviewAsteroid();
+                        }
+                    } else {
+                        this.spawnAsteroid();
+                    }
+                    this.lastSpawn = currentTime;
                 }
             } else {
-                this.spawnAsteroid();
+                // Mode normal : attendre qu'il y ait de la place
+                const maxAst = this.maxAsteroids[this.difficulty];
+                const delay = this.spawnDelay[this.difficulty];
+                if (this.asteroids.length < maxAst && currentTime - this.lastSpawn > delay) {
+                    if (this.isReviewMode) {
+                        if (this.reviewIndex < this.reviewQuestions.length) {
+                            this.spawnReviewAsteroid();
+                        }
+                    } else {
+                        this.spawnAsteroid();
+                    }
+                    this.lastSpawn = currentTime;
+                }
             }
-            this.lastSpawn = currentTime;
         }
 
         // Mise a jour des asteroides (sauf si geles)
@@ -502,11 +603,12 @@ class Game {
                 const hitEarth = asteroid.update(deltaTime);
 
                 if (hitEarth) {
-                    // Effet d'impact sur la Terre
+                    // Effet d'impact sur la Terre (position proportionnelle)
                     const center = asteroid.getCenter();
-                    ui.createEarthImpact(center.x, this.canvas.height - 100, asteroid.size);
+                    const earthMargin = asteroid.earthMargin || (120 * (this.canvas.height / 1080));
+                    ui.createEarthImpact(center.x, this.canvas.height - earthMargin + 20, asteroid.size);
                     // Afficher la bonne reponse manquee
-                    ui.showMissedAnswer(center.x, this.canvas.height - 150, asteroid.question, asteroid.answer);
+                    ui.showMissedAnswer(center.x, this.canvas.height - earthMargin - 30, asteroid.question, asteroid.answer);
                     audioManager.playExplosion();
 
                     // Enregistrer comme erreur (non répondue)
@@ -560,6 +662,10 @@ class Game {
         for (const asteroid of this.asteroids) {
             answers.add(asteroid.answer);
         }
+        // Inclure la réponse du powerup actif
+        if (this.activePowerUp) {
+            answers.add(this.activePowerUp.answer);
+        }
         return answers;
     }
 
@@ -582,6 +688,11 @@ class Game {
             );
             attempts++;
         } while (existingAnswers.has(asteroid.answer) && attempts < maxAttempts);
+
+        // Appliquer le slowdown si actif
+        if (this.slowdownActive) {
+            asteroid.applySlowdown(0.5);
+        }
 
         this.asteroids.push(asteroid);
     }
@@ -610,6 +721,29 @@ class Game {
         // PowerUp actif
         if (this.activePowerUp) {
             this.activePowerUp.draw(ctx);
+        }
+
+        // Flash répulseur sur le canvas
+        if (this.repulsorFlash) {
+            const elapsed = Date.now() - this.repulsorFlash.startTime;
+            const progress = elapsed / this.repulsorFlash.duration;
+            if (progress >= 1) {
+                this.repulsorFlash = null;
+            } else {
+                const opacity = 1 - progress;
+                const radius = 50 + progress * 400;
+                const gradient = ctx.createRadialGradient(
+                    this.repulsorFlash.x, this.repulsorFlash.y, 0,
+                    this.repulsorFlash.x, this.repulsorFlash.y, radius
+                );
+                gradient.addColorStop(0, `rgba(255, 200, 100, ${opacity * 0.6})`);
+                gradient.addColorStop(0.4, `rgba(255, 152, 0, ${opacity * 0.3})`);
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.repulsorFlash.x, this.repulsorFlash.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     }
 
@@ -909,6 +1043,48 @@ class Game {
         if (matchingAsteroid) {
             // Bonne reponse !
             this.handleCorrectAnswer(matchingAsteroid);
+
+            if (this.multishotActive) {
+                // Multi-tir : détruire aussi l'astéroïde le plus proche (peu importe sa réponse)
+                const remaining = this.asteroids.filter(a => a !== matchingAsteroid && !a.isHit);
+                if (remaining.length > 0) {
+                    // Trouver le plus proche de la Terre (maxY)
+                    let closest = remaining[0];
+                    for (const a of remaining) {
+                        if (a.y > closest.y) closest = a;
+                    }
+                    const center = closest.getCenter();
+                    const profile = profileManager.getActiveProfile();
+                    const laserColor = profile ? profile.accentColor : '#4fc3f7';
+                    closest.isHit = true;
+                    closest.hitColor = laserColor;
+                    const travelTime = this.createCanvasLaser(this.scientist.x, this.scientist.y - 70, center.x, center.y, laserColor);
+                    ui.createLaser(this.scientist.x, this.scientist.y - 70, center.x, center.y, laserColor);
+                    setTimeout(() => {
+                        ui.createExplosion(center.x, center.y);
+                        audioManager.playExplosion();
+                        ui.showPoints(center.x, center.y, 50);
+                        this.score += 50;
+                        this.asteroidsDestroyed++;
+                        ui.updateScore(this.score);
+                        if (this.gameMode === 'asteroids') {
+                            ui.updateProgress(this.asteroidsDestroyed, this.targetAsteroids);
+                            this.checkVictoryCondition();
+                        }
+                        const idx = this.asteroids.indexOf(closest);
+                        if (idx > -1) this.asteroids.splice(idx, 1);
+                        // Fragments si mode séparation
+                        if (this.splitMode && closest.canSplit) {
+                            const existingAnswers = this.getExistingAnswers();
+                            const fragments = closest.createFragments(this.operationConfig, this.difficulty, existingAnswers);
+                            fragments.forEach(f => {
+                                if (this.slowdownActive) f.applySlowdown(0.5);
+                                this.asteroids.push(f);
+                            });
+                        }
+                    }, travelTime);
+                }
+            }
         } else if (this.asteroids.length > 0 || this.activePowerUp) {
             // Mauvaise reponse (aucun asteroide n'a cette reponse)
             this.handleWrongAnswer(answer);
@@ -939,17 +1115,27 @@ class Game {
         const center = this.activePowerUp.getCenter();
         const type = this.activePowerUp.type;
 
-        // Si on a deja un powerup stocke, on le remplace
-        this.storedPowerUp = type;
-
         // Effets visuels et sonores
         ui.showPowerUpCollected(center.x, center.y, type);
-        ui.updatePowerUpIcon(type);
         audioManager.playPowerUpCollect();
         ui.showSuccess();
 
         // Supprimer le powerup de l'ecran
         this.activePowerUp = null;
+
+        // Extralife s'active immédiatement (pas de stockage)
+        if (type === 'extralife') {
+            if (this.lives < 4) {
+                this.lives++;
+                ui.addLife();
+                ui.updateLives(this.lives);
+            }
+            return;
+        }
+
+        // Stocker le powerup (remplace le précédent)
+        this.storedPowerUp = type;
+        ui.updatePowerUpIcon(type);
     }
 
     /**
@@ -1047,8 +1233,14 @@ class Game {
 
             // Mode separation : creer des fragments si l'asteroide peut se diviser
             if (this.splitMode && asteroid.canSplit) {
-                const fragments = asteroid.createFragments(this.operationConfig, this.difficulty);
-                fragments.forEach(fragment => this.asteroids.push(fragment));
+                const existingAnswers = this.getExistingAnswers();
+                const fragments = asteroid.createFragments(this.operationConfig, this.difficulty, existingAnswers);
+                fragments.forEach(fragment => {
+                    if (this.slowdownActive) {
+                        fragment.applySlowdown(0.5);
+                    }
+                    this.asteroids.push(fragment);
+                });
             }
 
             // Chance de faire apparaitre un powerup (15%)
@@ -1073,13 +1265,29 @@ class Game {
      * @param {string} type - Type specifique (optionnel, aleatoire sinon)
      */
     spawnPowerUp(type = null) {
-        this.activePowerUp = new PowerUp(
-            this.canvas.width,
-            this.canvas.height,
-            this.operationConfig,
-            this.difficulty,
-            type
-        );
+        const availableTypes = ['shield', 'freeze', 'repulsor', 'slowdown'];
+        // Extralife uniquement si le joueur n'est pas à vies pleines (max 4)
+        if (this.lives < 4) {
+            availableTypes.push('extralife');
+        }
+        if (this.splitMode || this.armageddonMode) {
+            availableTypes.push('multishot');
+        }
+        const existingAnswers = this.getExistingAnswers();
+        let powerUp;
+        let attempts = 0;
+        do {
+            powerUp = new PowerUp(
+                this.canvas.width,
+                this.canvas.height,
+                this.operationConfig,
+                this.difficulty,
+                type,
+                availableTypes
+            );
+            attempts++;
+        } while (existingAnswers.has(powerUp.answer) && attempts < 50);
+        this.activePowerUp = powerUp;
     }
 
     /**
@@ -1101,6 +1309,12 @@ class Game {
                 break;
             case 'repulsor':
                 this.activateRepulsor();
+                break;
+            case 'multishot':
+                this.activateMultishot();
+                break;
+            case 'slowdown':
+                this.activateSlowdown();
                 break;
         }
     }
@@ -1131,14 +1345,47 @@ class Game {
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
 
-        // Effet visuel
+        // Effet visuel DOM (anneaux, particules, screen shake)
         ui.createRepulsorEffect(centerX, centerY);
         audioManager.playRepulsorActivate();
+
+        // Flash canvas (radial gradient orange qui s'expand et fade)
+        this.repulsorFlash = {
+            x: centerX,
+            y: centerY,
+            startTime: Date.now(),
+            duration: 300
+        };
 
         // Repousser tous les asteroides pendant 3 secondes
         const repulsionDuration = 3000;
         for (const asteroid of this.asteroids) {
             asteroid.applyRepulsion(repulsionDuration);
+        }
+    }
+
+    /**
+     * Active le multi-tir — détruit tous les astéroïdes avec la même réponse pendant 10s
+     */
+    activateMultishot() {
+        this.multishotActive = true;
+        this.multishotEndTime = Date.now() + 10000;
+        ui.showMultishotOverlay();
+        audioManager.playShieldActivate(); // Réutiliser un son existant
+    }
+
+    /**
+     * Active le ralentissement — ralentit tous les astéroïdes pendant 8s
+     */
+    activateSlowdown() {
+        this.slowdownActive = true;
+        this.slowdownEndTime = Date.now() + 8000;
+        ui.showSlowdownOverlay();
+        audioManager.playFreezeActivate(); // Réutiliser un son existant
+
+        // Ralentir tous les astéroïdes existants
+        for (const asteroid of this.asteroids) {
+            asteroid.applySlowdown(0.5);
         }
     }
 
@@ -1216,6 +1463,7 @@ class Game {
      */
     gameOver() {
         this.isRunning = false;
+        ui.hideNumpad();
 
         // Nettoyer le timer
         if (this.gameTimer) {
@@ -1317,12 +1565,20 @@ class Game {
         this.storedPowerUp = null;
         this.shieldActive = false;
         this.freezeActive = false;
+        this.multishotActive = false;
+        this.multishotEndTime = 0;
+        this.slowdownActive = false;
+        this.slowdownEndTime = 0;
+        this.repulsorFlash = null;
         ui.updatePowerUpIcon(null);
         ui.removeShieldEffect();
         if (ui.freezeOverlay) {
             ui.freezeOverlay.remove();
             ui.freezeOverlay = null;
         }
+        ui.hideMultishotOverlay();
+        ui.hideSlowdownOverlay();
+        ui.hideNumpad();
 
         cancelAnimationFrame(this.animationId);
         audioManager.stopMusic();
@@ -1386,8 +1642,15 @@ class Game {
         this.shieldActive = false;
         this.freezeActive = false;
         this.freezeEndTime = 0;
+        this.multishotActive = false;
+        this.multishotEndTime = 0;
+        this.slowdownActive = false;
+        this.slowdownEndTime = 0;
+        this.repulsorFlash = null;
         ui.updatePowerUpIcon(null);
         ui.removeShieldEffect();
+        ui.hideMultishotOverlay();
+        ui.hideSlowdownOverlay();
 
         // Mode astéroïdes avec le nombre d'erreurs comme cible
         this.gameMode = 'asteroids';
@@ -1417,6 +1680,16 @@ class Game {
         ui.resetLives();
         ui.setupModeDisplay('asteroids', 0, errors.length);
         ui.showScreen('game');
+
+        // Mobile : afficher le numpad custom automatiquement
+        if (this.isMobile) {
+            ui.answerInput.readOnly = true;
+            ui.showNumpad();
+        } else {
+            ui.answerInput.readOnly = false;
+            const toggleBtn = document.getElementById('numpad-toggle-btn');
+            if (toggleBtn) toggleBtn.classList.remove('hidden');
+        }
 
         // Démarrer la musique
         audioManager.startMusic();

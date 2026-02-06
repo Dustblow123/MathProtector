@@ -645,10 +645,13 @@ class ProfileManager {
         const stats = this.getAggregatedStats(profileId);
         const weakAreas = [];
 
+        // Seuil minimum de réponses pour détecter une faiblesse
+        const MIN_ANSWERS = 3;
+
         // Analyser les tables (multiplication/division)
         for (let table = 1; table <= 10; table++) {
             const tableData = stats.tableStats[table];
-            if (tableData && tableData.correct + tableData.wrong >= 10) {
+            if (tableData && tableData.correct + tableData.wrong >= MIN_ANSWERS) {
                 const successRate = tableData.correct / (tableData.correct + tableData.wrong);
                 if (successRate < 0.7) {
                     weakAreas.push({
@@ -675,7 +678,7 @@ class ProfileManager {
         };
 
         for (const [op, data] of Object.entries(stats.operationStats)) {
-            if (data.correct + data.wrong >= 10) {
+            if (data.correct + data.wrong >= MIN_ANSWERS) {
                 const successRate = data.correct / (data.correct + data.wrong);
                 if (successRate < 0.7) {
                     weakAreas.push({
@@ -685,6 +688,22 @@ class ProfileManager {
                         label: operationLabels[op] || op,
                         correct: data.correct,
                         wrong: data.wrong
+                    });
+                }
+            }
+        }
+
+        // Inclure aussi les erreurs fréquentes comme faiblesses
+        if (stats.frequentErrors && stats.frequentErrors.length > 0) {
+            for (const err of stats.frequentErrors) {
+                if (err.count >= 2) {
+                    weakAreas.push({
+                        type: 'frequent',
+                        value: err.question,
+                        successRate: 0,
+                        label: `"${err.question}" (${err.count} erreurs)`,
+                        correct: 0,
+                        wrong: err.count
                     });
                 }
             }
