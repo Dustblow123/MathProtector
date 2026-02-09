@@ -1206,6 +1206,10 @@ class UIManager {
                 break;
             case 'game':
                 this.gameScreen.classList.add('active');
+                this.answerInput.value = '';
+                // Clear side numpad input too
+                const sideInput = document.querySelector('.numpad-side-input');
+                if (sideInput) sideInput.value = '';
                 this.answerInput.focus({ preventScroll: true });
                 this.updateSubmitBtnVisibility();
                 break;
@@ -1282,8 +1286,14 @@ class UIManager {
      * Réinitialise l'affichage des vies
      */
     resetLives() {
-        const lifeElements = this.livesContainer.querySelectorAll('.life');
-        lifeElements.forEach(life => life.classList.remove('lost'));
+        // Reset to exactly 3 hearts (remove extras from extralife powerup)
+        this.livesContainer.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const life = document.createElement('span');
+            life.className = 'life';
+            life.textContent = '❤️';
+            this.livesContainer.appendChild(life);
+        }
     }
 
     /**

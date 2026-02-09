@@ -40,10 +40,20 @@ class AudioManager {
     }
 
     /**
+     * Ensure audio context is running (resume if suspended by browser)
+     */
+    ensureContext() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    }
+
+    /**
      * Génère un son de laser synthétique
      */
     playLaser() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
@@ -67,6 +77,7 @@ class AudioManager {
      */
     playExplosion() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Bruit blanc pour l'explosion
         const bufferSize = this.audioContext.sampleRate * 0.3;
@@ -101,6 +112,7 @@ class AudioManager {
      */
     playWrong() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
@@ -124,6 +136,7 @@ class AudioManager {
      */
     playCombo() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const frequencies = [523.25, 659.25, 783.99]; // Do, Mi, Sol
 
@@ -151,6 +164,7 @@ class AudioManager {
      */
     playLifeLost() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
@@ -174,6 +188,7 @@ class AudioManager {
      */
     playGameOver() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const notes = [392, 349.23, 329.63, 293.66]; // Sol, Fa, Mi, Re (descendant)
 
@@ -201,6 +216,7 @@ class AudioManager {
      */
     playPowerUpCollect() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         const frequencies = [523.25, 659.25, 783.99, 1046.50]; // Do, Mi, Sol, Do (octave)
 
@@ -228,6 +244,7 @@ class AudioManager {
      */
     playShieldActivate() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Oscillateur principal - ton grave
         const osc1 = this.audioContext.createOscillator();
@@ -262,6 +279,7 @@ class AudioManager {
      */
     playShieldBlock() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Impact metallique
         const osc = this.audioContext.createOscillator();
@@ -295,6 +313,7 @@ class AudioManager {
      */
     playFreezeActivate() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Bruit blanc filtre pour effet de souffle glace
         const bufferSize = this.audioContext.sampleRate * 0.8;
@@ -344,6 +363,7 @@ class AudioManager {
      */
     playRepulsorActivate() {
         if (!this.soundEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Explosion grave
         const bufferSize = this.audioContext.sampleRate * 0.5;
@@ -400,6 +420,7 @@ class AudioManager {
      */
     playMusicLoop() {
         if (!this.musicEnabled || !this.audioContext) return;
+        this.ensureContext();
 
         // Notes de la mélodie spatiale (en Hz)
         const melody = [
