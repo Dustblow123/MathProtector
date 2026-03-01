@@ -1,63 +1,124 @@
-# Sauve la Terre - Tables de Multiplication
+# Sauve la Terre 🌍
 
-Un jeu éducatif où tu dois sauver la Terre des astéroïdes en résolvant des multiplications !
+Un jeu éducatif de maths où des astéroïdes menacent la Terre. Réponds correctement aux questions pour les détruire au laser avant qu'ils n'atteignent la surface !
 
-## Comment jouer
+Jouable directement dans le navigateur, sans installation — **100 % JavaScript vanilla**.
 
-1. Ouvre `index.html` dans ton navigateur
-2. Sélectionne les tables de multiplication que tu veux pratiquer
-3. Choisis un niveau de difficulté
-4. Clique sur "JOUER"
-5. Tape la réponse à la multiplication affichée sur l'astéroïde
-6. Appuie sur Entrée pour tirer le laser et détruire l'astéroïde !
+---
 
-## Règles
+## Fonctionnalités
 
-- Chaque astéroïde affiche une multiplication (ex: 7 × 8)
-- Entre la bonne réponse pour le détruire avant qu'il touche la Terre
-- Tu as 3 vies - chaque astéroïde qui touche la Terre te fait perdre une vie
-- Enchaîne les bonnes réponses pour augmenter ton combo et marquer plus de points !
+### Opérations mathématiques
+- Multiplication, addition, soustraction, division
+- Fractions, pourcentages, puissances (niveaux avancés)
+- Tables de 1 à 10 sélectionnables individuellement
 
-## Niveaux de difficulté
+### Modes de jeu
+| Mode | Description |
+|---|---|
+| **Infini** | Survie continue, score croissant |
+| **Chrono** | Détruire un maximum d'astéroïdes en temps limité |
+| **Objectif** | Atteindre un nombre précis d'astéroïdes détruits |
+| **Armageddon** | Vagues en rafale à intervalles très courts |
+| **Révision du jour** | Questions dues selon la répétition espacée |
+| **Rejouer mes erreurs** | Retravailler les questions ratées en fin de partie |
 
-- **Facile** : Astéroïdes lents, idéal pour débuter
-- **Moyen** : Vitesse normale, bon équilibre
-- **Difficile** : Astéroïdes rapides et multiples simultanément
+### Niveaux de difficulté
+- **Facile** — astéroïdes lents, un seul à la fois
+- **Moyen** — vitesse normale, équilibre idéal
+- **Difficile** — rapides et nombreux simultanément
 
-## Système de points
+### Répétition espacée (SR)
+Système hybride sessions / jours inspiré de SM-2 :
 
-- 100 points de base par astéroïde détruit
-- Multiplicateur de combo (x2, x3, x4...) pour les bonnes réponses consécutives
-- Bonus temps pour les réponses rapides (jusqu'à x2)
-- Ton meilleur score est sauvegardé automatiquement
+| Étape | Intervalle |
+|---|---|
+| Nouvelle carte / échec | session suivante |
+| 1ère réussite | +3 sessions |
+| 2ème réussite | +3 jours |
+| 3ème réussite | +7 jours |
+| 4ème+ | ×EF (SM-2) |
+
+Jouer plusieurs sessions dans la journée fait avancer les cartes plus vite. Le widget du menu affiche les cartes dues, en cours et maîtrisées.
+
+### Power-ups (jusqu'à 3 en file)
+| Power-up | Effet |
+|---|---|
+| 🛡️ Bouclier | Absorbe la prochaine vie perdue |
+| ❄️ Gel | Fige tous les astéroïdes pendant quelques secondes |
+| 💥 Répulseur | Repousse les astéroïdes vers le haut |
+| ⚡ Multitir | Tire automatiquement sur tous les astéroïdes |
+| 🐢 Ralentissement | Réduit la vitesse de tous les astéroïdes |
+| ➕ Vie extra | Redonne une vie |
+
+Activation : **Espace** (clavier) ou bouton dédié (mobile).
+
+### Profils joueurs
+- Plusieurs profils indépendants (nom + avatar emoji)
+- Historique de sessions, erreurs fréquentes, progressions
+- Stats par opération, table et difficulté
+
+### Audio (Web Audio API — procédural, sans fichier)
+- 4 musiques sélectionnables : Base, Calme, Épique, Rythmée
+- Effets sonores : laser, explosion, combo, victoire, etc.
+- Contrôles séparés musique / effets sonores
+
+### Mobile
+- Numpad tactile intégré
+- Responsive canvas
+- Validation automatique à la saisie complète
+
+---
+
+## Lancer le jeu
+
+```
+Ouvrir index.html dans un navigateur moderne
+```
+
+Aucune dépendance, aucun serveur requis.
+
+---
 
 ## Contrôles
 
-- **Clavier** : Tape ta réponse et appuie sur Entrée
-- **Souris** : Clique sur le bouton d'envoi
-- **Pause** : Bouton pause en haut à droite
+| Action | Clavier | Mobile |
+|---|---|---|
+| Répondre | Taper + **Entrée** | Numpad tactile |
+| Activer power-up | **Espace** | Bouton ⚡ |
+| Pause | Bouton pause | Bouton pause |
+
+---
 
 ## Structure du projet
 
 ```
-├── index.html          # Page principale
+├── index.html                  # Interface complète (menu, jeu, écrans)
 ├── css/
-│   └── style.css       # Styles et animations
-├── js/
-│   ├── game.js         # Logique principale du jeu
-│   ├── asteroid.js     # Classe Astéroïde
-│   ├── ui.js           # Gestion interface utilisateur
-│   └── audio.js        # Gestion sons/musique
-└── README.md
+│   └── style.css               # Styles, animations, responsive
+└── js/
+    ├── game.js                 # Logique principale, boucle de jeu
+    ├── asteroid.js             # Classe Asteroid (spawn, physique, rendu)
+    ├── powerup.js              # Classe PowerUp (types, effets, rendu)
+    ├── audio.js                # AudioManager (musiques et SFX procéduraux)
+    ├── ui.js                   # UIManager (DOM, écrans, widgets)
+    ├── profile.js              # Profils, sessions, historique
+    ├── spaced-repetition.js    # Algorithme SR hybride sessions/jours
+    └── question-generator.js   # Génération de questions par type
 ```
 
-## Technologies utilisées
+---
 
-- HTML5 Canvas pour le rendu graphique
-- CSS3 pour les animations et l'interface
-- JavaScript vanilla (pas de framework)
-- Web Audio API pour les sons synthétisés
+## Technologies
+
+- **HTML5 Canvas** — rendu graphique du jeu
+- **CSS3** — animations, transitions, layout responsive
+- **JavaScript ES2020** — logique, classes, modules
+- **Web Audio API** — musique et effets synthétisés en temps réel
+- **localStorage** — persistance des profils, scores et cartes SR
+
+---
 
 ## Compatibilité
 
-Fonctionne sur tous les navigateurs modernes (Chrome, Firefox, Edge, Safari).
+Navigateurs modernes : Chrome, Firefox, Edge, Safari (desktop et mobile).
