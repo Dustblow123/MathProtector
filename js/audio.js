@@ -12,6 +12,8 @@ class AudioManager {
         this.musicSource = null;
         this.musicBuffer = null;
         this.initialized = false;
+        this.selectedMusic = localStorage.getItem('mathGameMusic') || 'base';
+        this._loopScheduled = false;
     }
 
     /**
@@ -45,6 +47,15 @@ class AudioManager {
     ensureContext() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             this.audioContext.resume();
+        }
+    }
+
+    /**
+     * Version async de ensureContext - attend que le contexte soit actif
+     */
+    async ensureContextAsync() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
         }
     }
 
@@ -410,61 +421,185 @@ class AudioManager {
      * Démarre la musique de fond (générée procéduralement)
      */
     startMusic() {
-        if (!this.musicEnabled || !this.audioContext || this.musicSource) return;
-
+        if (!this.musicEnabled || !this.audioContext) return;
+        if (this.musicLoopActive) return; // Eviter les boucles doubles
+        this.musicLoopActive = true;
         this.playMusicLoop();
     }
 
     /**
-     * Joue une boucle musicale simple
+     * Dispatche vers le bon générateur selon la musique sélectionnée
      */
     playMusicLoop() {
         if (!this.musicEnabled || !this.audioContext) return;
         this.ensureContext();
+        switch (this.selectedMusic) {
+            case 'calm':   this._loopCalm();   break;
+            case 'epic':   this._loopEpic();   break;
+            case 'rhythm': this._loopRhythm(); break;
+            default:       this._loopBase();   break;
+        }
+    }
 
-        // Notes de la mélodie spatiale (en Hz)
+    /**
+     * Musique de base — mélodie spatiale simple (sine)
+     */
+    _loopBase() {
         const melody = [
-            { note: 329.63, duration: 0.5 },  // Mi
-            { note: 392, duration: 0.5 },     // Sol
-            { note: 440, duration: 0.5 },     // La
-            { note: 392, duration: 0.5 },     // Sol
-            { note: 329.63, duration: 0.5 },  // Mi
-            { note: 293.66, duration: 0.5 },  // Ré
-            { note: 329.63, duration: 1 },    // Mi
-            { note: 0, duration: 0.5 },       // Silence
+            { note: 329.63, duration: 0.5 },
+            { note: 392,    duration: 0.5 },
+            { note: 440,    duration: 0.5 },
+            { note: 392,    duration: 0.5 },
+            { note: 329.63, duration: 0.5 },
+            { note: 293.66, duration: 0.5 },
+            { note: 329.63, duration: 1.0 },
+            { note: 0,      duration: 0.5 },
         ];
+        this._scheduleNotes(melody, 'sine', 0.10);
+    }
 
+    /**
+     * Musique calme — pentatonique lente, notes longues (sine)
+     */
+    _loopCalm() {
+        const melody = [
+            { note: 261.63, duration: 2.0 },  // Do
+            { note: 329.63, duration: 2.0 },  // Mi
+            { note: 392,    duration: 2.0 },  // Sol
+            { note: 329.63, duration: 1.5 },  // Mi
+            { note: 261.63, duration: 1.5 },  // Do
+            { note: 0,      duration: 1.0 },  // Silence
+            { note: 392,    duration: 2.0 },  // Sol
+            { note: 440,    duration: 2.0 },  // La
+            { note: 392,    duration: 1.5 },  // Sol
+            { note: 329.63, duration: 1.5 },  // Mi
+            { note: 0,      duration: 1.0 },  // Silence
+        ];
+        this._scheduleNotes(melody, 'sine', 0.08);
+    }
+
+    /**
+     * Musique épique — fanfare heroïque (sawtooth + triangle basse)
+     */
+    _loopEpic() {
+        const melody = [
+            { note: 392,    duration: 0.3 },  // Sol
+            { note: 523.25, duration: 0.3 },  // Do
+            { note: 587.33, duration: 0.3 },  // Ré
+            { note: 659.25, duration: 0.6 },  // Mi
+            { note: 523.25, duration: 0.3 },  // Do
+            { note: 659.25, duration: 0.6 },  // Mi
+            { note: 783.99, duration: 0.9 },  // Sol aigu
+            { note: 0,      duration: 0.3 },
+            { note: 659.25, duration: 0.3 },  // Mi
+            { note: 587.33, duration: 0.3 },  // Ré
+            { note: 523.25, duration: 0.6 },  // Do
+            { note: 392,    duration: 0.9 },  // Sol
+            { note: 0,      duration: 0.3 },
+        ];
+        const bass = [
+            { note: 98,    duration: 0.6 },
+            { note: 130.81,duration: 0.6 },
+            { note: 98,    duration: 0.6 },
+            { note: 130.81,duration: 0.6 },
+            { note: 98,    duration: 0.6 },
+            { note: 110,   duration: 0.6 },
+            { note: 98,    duration: 0.6 },
+            { note: 0,     duration: 0.6 },
+        ];
+        this._scheduleNotes(melody, 'sawtooth', 0.07);
+        this._scheduleNotes(bass, 'triangle', 0.09);
+    }
+
+    /**
+     * Musique rythmée — pattern énergique avec basse (triangle + square)
+     */
+    _loopRhythm() {
+        const melody = [
+            { note: 523.25, duration: 0.25 },  // Do
+            { note: 587.33, duration: 0.25 },  // Ré
+            { note: 659.25, duration: 0.25 },  // Mi
+            { note: 783.99, duration: 0.25 },  // Sol
+            { note: 659.25, duration: 0.25 },  // Mi
+            { note: 587.33, duration: 0.25 },  // Ré
+            { note: 523.25, duration: 0.5  },  // Do
+            { note: 0,      duration: 0.25 },
+            { note: 659.25, duration: 0.25 },  // Mi
+            { note: 783.99, duration: 0.25 },  // Sol
+            { note: 880,    duration: 0.25 },  // La
+            { note: 783.99, duration: 0.25 },  // Sol
+            { note: 659.25, duration: 0.25 },  // Mi
+            { note: 523.25, duration: 0.25 },  // Do
+            { note: 587.33, duration: 0.5  },  // Ré
+            { note: 0,      duration: 0.25 },
+        ];
+        // Beat régulier (kick simulé avec bruit)
+        const beat = [
+            { note: 80,  duration: 0.25 },
+            { note: 0,   duration: 0.25 },
+            { note: 110, duration: 0.25 },
+            { note: 0,   duration: 0.25 },
+        ];
+        this._scheduleNotes(melody, 'triangle', 0.08);
+        // Répéter le beat 4 fois pour couvrir la durée de la mélodie
+        const fullBeat = [...beat, ...beat, ...beat, ...beat];
+        this._scheduleNotes(fullBeat, 'square', 0.06);
+    }
+
+    /**
+     * Planifie une séquence de notes et programme la boucle suivante
+     * @param {Array}  notes   - [{note, duration}]
+     * @param {string} type    - type d'oscillateur
+     * @param {number} volume  - volume max
+     */
+    _scheduleNotes(notes, type, volume) {
         let time = this.audioContext.currentTime;
-        const loopDuration = melody.reduce((acc, n) => acc + n.duration, 0);
+        const loopDuration = notes.reduce((acc, n) => acc + n.duration, 0);
 
-        melody.forEach(({ note, duration }) => {
+        notes.forEach(({ note, duration }) => {
             if (note > 0) {
-                const osc = this.audioContext.createOscillator();
+                const osc  = this.audioContext.createOscillator();
                 const gain = this.audioContext.createGain();
-
                 osc.connect(gain);
                 gain.connect(this.musicGain);
-
-                osc.type = 'sine';
+                osc.type = type;
                 osc.frequency.value = note;
-
+                const attack  = Math.min(0.05, duration * 0.1);
+                const release = Math.min(0.08, duration * 0.15);
                 gain.gain.setValueAtTime(0, time);
-                gain.gain.linearRampToValueAtTime(0.1, time + 0.05);
-                gain.gain.linearRampToValueAtTime(0.05, time + duration - 0.05);
+                gain.gain.linearRampToValueAtTime(volume, time + attack);
+                gain.gain.linearRampToValueAtTime(volume * 0.6, time + duration - release);
                 gain.gain.linearRampToValueAtTime(0, time + duration);
-
                 osc.start(time);
                 osc.stop(time + duration);
             }
             time += duration;
         });
 
-        // Boucle
-        this.musicLoopTimeout = setTimeout(() => {
-            if (this.musicEnabled) {
-                this.playMusicLoop();
-            }
-        }, loopDuration * 1000);
+        // Boucle — on programme le prochain appel seulement si c'est le premier _scheduleNotes
+        // (on identifie ça avec le flag musicLoopTimeout non encore positionné pour ce cycle)
+        if (!this._loopScheduled) {
+            this._loopScheduled = true;
+            this.musicLoopTimeout = setTimeout(() => {
+                this._loopScheduled = false;
+                if (this.musicEnabled && this.musicLoopActive) {
+                    this.playMusicLoop();
+                }
+            }, loopDuration * 1000);
+        }
+    }
+
+    /**
+     * Change la musique et redémarre la boucle
+     * @param {string} type - 'base' | 'calm' | 'epic' | 'rhythm'
+     */
+    setMusic(type) {
+        this.selectedMusic = type;
+        localStorage.setItem('mathGameMusic', type);
+        if (this.musicLoopActive) {
+            this.stopMusic();
+            this.startMusic();
+        }
     }
 
     /**
@@ -475,6 +610,8 @@ class AudioManager {
             clearTimeout(this.musicLoopTimeout);
             this.musicLoopTimeout = null;
         }
+        this.musicLoopActive = false;
+        this._loopScheduled = false;
     }
 
     /**

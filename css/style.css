@@ -1616,11 +1616,19 @@ body {
         font-size: 4rem;
     }
 
+    .powerup-icons-container {
+        bottom: 130px;
+        right: calc(50% - 155px);
+    }
+
     .powerup-icon {
         width: 40px;
         height: 40px;
-        bottom: 130px;
-        right: calc(50% - 150px);
+    }
+
+    .powerup-icon.queued {
+        width: 30px;
+        height: 30px;
     }
 }
 
@@ -1628,21 +1636,44 @@ body {
 /* SYSTEME DE POWERUP */
 /* ====================== */
 
-/* Icone PowerUp a cote de la planete */
-.powerup-icon {
+/* Conteneur de la file de powerups (max 3) */
+.powerup-icons-container {
     position: absolute;
     bottom: 150px;
-    right: calc(50% - 200px);
+    right: calc(50% - 210px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 15;
+}
+
+/* Icone PowerUp */
+.powerup-icon {
+    position: relative;
     width: 50px;
     height: 50px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 15;
     cursor: pointer;
     animation: powerupPulse 1.5s ease-in-out infinite;
     transition: all 0.3s ease;
+}
+
+/* Icones en file d'attente (2e et 3e) - plus petites et moins lumineuses */
+.powerup-icon.queued {
+    width: 36px;
+    height: 36px;
+    opacity: 0.55;
+    animation: none;
+    filter: brightness(0.7);
+}
+
+.powerup-icon.queued svg {
+    width: 20px;
+    height: 20px;
 }
 
 .powerup-icon:hover {
@@ -3707,6 +3738,51 @@ body {
     border-color: var(--primary);
     color: #fff;
 }
+
+/* Sélecteur de musique */
+.music-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.music-btn {
+    padding: 3px 10px;
+    border: 1px solid rgba(179, 136, 255, 0.3);
+    background: rgba(179, 136, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.music-btn:hover {
+    background: rgba(179, 136, 255, 0.2);
+    border-color: rgba(179, 136, 255, 0.5);
+}
+
+.music-btn.active {
+    background: rgba(179, 136, 255, 0.4);
+    border-color: #b388ff;
+    color: #fff;
+}
+
+/* Icônes ON/OFF dans les boutons son/musique du menu
+   active = activé → icon-on visible ; sans active → icon-off visible */
+.sound-btn .icon-on  { display: none; }
+.sound-btn .icon-off { display: block; }
+.sound-btn.active .icon-on  { display: block; }
+.sound-btn.active .icon-off { display: none; }
+
+/* HUD : boutons musique/sfx
+   par défaut = activé → icon-on visible ; muted → icon-off visible */
+.icon-btn .icon-on  { display: block; }
+.icon-btn .icon-off { display: none; }
+.icon-btn.muted .icon-on  { display: none; }
+.icon-btn.muted .icon-off { display: block; }
 
 /* ================================= */
 /* NUMPAD SPLIT MODE (GAUCHER/DROITIER) */

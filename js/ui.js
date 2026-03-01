@@ -16,6 +16,7 @@ class UIManager {
         this.toggleMusicBtn = document.getElementById('toggle-music');
         this.toggleSoundBtn = document.getElementById('toggle-sound');
         this.menuHighScore = document.getElementById('menu-high-score');
+        this.musicBtns = document.querySelectorAll('.music-btn');
 
         // Éléments du jeu
         this.canvas = document.getElementById('game-canvas');
@@ -25,7 +26,8 @@ class UIManager {
         this.answerInput = document.getElementById('answer-input');
         this.submitBtn = document.getElementById('submit-answer');
         this.pauseBtn = document.getElementById('pause-btn');
-        this.gameSoundBtn = document.getElementById('game-sound-btn');
+        this.gameMusicBtn = document.getElementById('game-music-btn');
+        this.gameSfxBtn = document.getElementById('game-sfx-btn');
 
         // Éléments game over
         this.finalScore = document.getElementById('final-score');
@@ -234,6 +236,20 @@ class UIManager {
             this.toggleSoundBtn.classList.toggle('active', enabled);
         });
 
+        // Sélecteur de musique (menu)
+        this.musicBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.musicBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                callbacks.onSelectMusic(btn.dataset.music);
+            });
+        });
+        // Marquer la musique sauvegardée comme active au démarrage
+        const savedMusic = localStorage.getItem('mathGameMusic') || 'base';
+        this.musicBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.music === savedMusic);
+        });
+
         // Démarrer le jeu
         this.startBtn.addEventListener('click', () => {
             const tables = this.getSelectedTables();
@@ -274,11 +290,21 @@ class UIManager {
             callbacks.onPause();
         });
 
-        // Son pendant le jeu (coupe son ET musique)
-        this.gameSoundBtn.addEventListener('click', () => {
-            const enabled = callbacks.onToggleAll();
-            this.gameSoundBtn.classList.toggle('muted', !enabled);
-        });
+        // Musique pendant le jeu
+        if (this.gameMusicBtn) {
+            this.gameMusicBtn.addEventListener('click', () => {
+                const enabled = callbacks.onToggleMusic();
+                this.gameMusicBtn.classList.toggle('muted', !enabled);
+            });
+        }
+
+        // Effets sonores pendant le jeu
+        if (this.gameSfxBtn) {
+            this.gameSfxBtn.addEventListener('click', () => {
+                const enabled = callbacks.onToggleSound();
+                this.gameSfxBtn.classList.toggle('muted', !enabled);
+            });
+        }
 
         // Reprendre
         this.resumeBtn.addEventListener('click', () => {
@@ -1918,33 +1944,47 @@ class UIManager {
     // ====================== SYSTEME DE POWERUP ======================
 
     /**
-     * Met a jour l'icone du powerup stocke
-     * @param {string|null} type - Type de powerup (shield, freeze, repulsor) ou null pour masquer
+     * Met a jour les icones de la file de powerups (max 3)
+     * @param {string[]} types - Tableau de types de powerups
+     */
+    updatePowerUpIcons(types) {
+        // Supprimer le conteneur existant
+        const existing = document.getElementById('powerup-icons-container');
+        if (existing) existing.remove();
+        this.powerUpIcon = null;
+
+        if (!types || types.length === 0) return;
+
+        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        const container = document.createElement('div');
+        container.id = 'powerup-icons-container';
+        container.className = 'powerup-icons-container';
+
+        types.forEach((type, index) => {
+            const icon = document.createElement('div');
+            icon.className = `powerup-icon ${type}${index > 0 ? ' queued' : ''}`;
+            icon.innerHTML = this.getPowerUpIconSVG(type);
+
+            if (index === 0 && !isMobile) {
+                const hint = document.createElement('div');
+                hint.className = 'powerup-icon-hint';
+                hint.textContent = '[Espace]';
+                icon.appendChild(hint);
+            }
+
+            container.appendChild(icon);
+        });
+
+        this.gameScreen.appendChild(container);
+        this.powerUpIcon = container.querySelector('.powerup-icon');
+    }
+
+    /**
+     * @deprecated Utiliser updatePowerUpIcons() a la place
      */
     updatePowerUpIcon(type) {
-        // Supprimer l'icone existante
-        if (this.powerUpIcon) {
-            this.powerUpIcon.remove();
-            this.powerUpIcon = null;
-        }
-
-        if (!type) return;
-
-        // Creer la nouvelle icone
-        this.powerUpIcon = document.createElement('div');
-        this.powerUpIcon.className = `powerup-icon ${type}`;
-        this.powerUpIcon.innerHTML = this.getPowerUpIconSVG(type);
-
-        // Ajouter l'indication (Espace sur desktop, rien sur mobile car bouton dédié)
-        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        if (!isMobile) {
-            const hint = document.createElement('div');
-            hint.className = 'powerup-icon-hint';
-            hint.textContent = '[Espace]';
-            this.powerUpIcon.appendChild(hint);
-        }
-
-        this.gameScreen.appendChild(this.powerUpIcon);
+        this.updatePowerUpIcons(type ? [type] : []);
     }
 
     /**

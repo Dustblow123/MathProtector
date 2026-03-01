@@ -48,7 +48,7 @@ class Game {
 
         // PowerUps
         this.activePowerUp = null;      // PowerUp actuellement a l'ecran
-        this.storedPowerUp = null;      // Type de powerup stocke (string)
+        this.storedPowerUps = [];       // File d'attente des powerups stockes (max 3)
         this.shieldActive = false;      // Bouclier actif?
         this.freezeActive = false;      // Gel actif?
         this.freezeEndTime = 0;         // Timestamp fin du gel
@@ -126,6 +126,7 @@ class Game {
             onToggleMusic: () => audioManager.toggleMusic(),
             onToggleSound: () => audioManager.toggleSound(),
             onToggleAll: () => audioManager.toggleAll(),
+            onSelectMusic: (type) => audioManager.setMusic(type),
             onToggleSplitMode: (enabled) => this.splitMode = enabled,
             onToggleArmageddonMode: (enabled) => this.armageddonMode = enabled,
             onSetArmageddonLevel: (level) => this.armageddonLevel = level
@@ -332,7 +333,7 @@ class Game {
 
         // Reset powerups
         this.activePowerUp = null;
-        this.storedPowerUp = null;
+        this.storedPowerUps = [];
         this.shieldActive = false;
         this.freezeActive = false;
         this.freezeEndTime = 0;
@@ -341,7 +342,7 @@ class Game {
         this.slowdownActive = false;
         this.slowdownEndTime = 0;
         this.repulsorFlash = null;
-        ui.updatePowerUpIcon(null);
+        ui.updatePowerUpIcons([]);
         ui.removeShieldEffect();
         if (ui.freezeOverlay) {
             ui.freezeOverlay.remove();
@@ -400,6 +401,7 @@ class Game {
         ui.updateCombo(1);
         ui.resetLives();
         ui.setupModeDisplay(this.gameMode, this.remainingTime, this.targetAsteroids);
+        if (ui.answerInput) ui.answerInput.value = '';
         ui.showScreen('game');
 
         // Mobile : afficher le numpad custom automatiquement
@@ -418,7 +420,8 @@ class Game {
             this.startGameTimer();
         }
 
-        // Démarrer la musique
+        // Démarrer la musique (reprendre le contexte audio si suspendu par le navigateur)
+        await audioManager.ensureContextAsync();
         audioManager.startMusic();
 
         // Lancer la boucle de jeu
@@ -1220,9 +1223,11 @@ class Game {
             return;
         }
 
-        // Stocker le powerup (remplace le précédent)
-        this.storedPowerUp = type;
-        ui.updatePowerUpIcon(type);
+        // Stocker le powerup dans la file (max 3)
+        if (this.storedPowerUps.length < 3) {
+            this.storedPowerUps.push(type);
+            ui.updatePowerUpIcons(this.storedPowerUps);
+        }
     }
 
     /**
@@ -1381,11 +1386,10 @@ class Game {
      * Active le powerup stocke (appele avec la touche Espace)
      */
     activatePowerUp() {
-        if (!this.storedPowerUp) return;
+        if (!this.storedPowerUps.length) return;
 
-        const type = this.storedPowerUp;
-        this.storedPowerUp = null;
-        ui.updatePowerUpIcon(null);
+        const type = this.storedPowerUps.shift();
+        ui.updatePowerUpIcons(this.storedPowerUps);
 
         switch (type) {
             case 'shield':
@@ -1649,7 +1653,7 @@ class Game {
 
         // Nettoyer les powerups
         this.activePowerUp = null;
-        this.storedPowerUp = null;
+        this.storedPowerUps = [];
         this.shieldActive = false;
         this.freezeActive = false;
         this.multishotActive = false;
@@ -1657,7 +1661,7 @@ class Game {
         this.slowdownActive = false;
         this.slowdownEndTime = 0;
         this.repulsorFlash = null;
-        ui.updatePowerUpIcon(null);
+        ui.updatePowerUpIcons([]);
         ui.removeShieldEffect();
         if (ui.freezeOverlay) {
             ui.freezeOverlay.remove();
@@ -1707,9 +1711,7 @@ class Game {
         }));
         this.reviewIndex = 0;
 
-        // Configuration basique pour le mode révision
-        this.difficulty = 'medium';
-        this.tables = [1, 2, 3, 4, 5];
+        // Garder la difficulté et les tables de la partie précédente
 
         // Reset etat
         this.score = 0;
@@ -1725,7 +1727,7 @@ class Game {
 
         // Reset powerups
         this.activePowerUp = null;
-        this.storedPowerUp = null;
+        this.storedPowerUps = [];
         this.shieldActive = false;
         this.freezeActive = false;
         this.freezeEndTime = 0;
@@ -1734,7 +1736,7 @@ class Game {
         this.slowdownActive = false;
         this.slowdownEndTime = 0;
         this.repulsorFlash = null;
-        ui.updatePowerUpIcon(null);
+        ui.updatePowerUpIcons([]);
         ui.removeShieldEffect();
         ui.hideMultishotOverlay();
         ui.hideSlowdownOverlay();
@@ -1766,6 +1768,7 @@ class Game {
         ui.updateCombo(1);
         ui.resetLives();
         ui.setupModeDisplay('asteroids', 0, errors.length);
+        if (ui.answerInput) ui.answerInput.value = '';
         ui.showScreen('game');
 
         // Mobile : afficher le numpad custom automatiquement
@@ -1778,7 +1781,8 @@ class Game {
             if (toggleBtn) toggleBtn.classList.remove('hidden');
         }
 
-        // Démarrer la musique
+        // Démarrer la musique (reprendre le contexte audio si suspendu par le navigateur)
+        await audioManager.ensureContextAsync();
         audioManager.startMusic();
 
         // Lancer la boucle de jeu
