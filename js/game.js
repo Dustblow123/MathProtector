@@ -476,6 +476,13 @@ class Game {
     checkVictoryCondition() {
         if (this.gameMode === 'asteroids' && this.asteroidsDestroyed >= this.targetAsteroids) {
             this.victory();
+            return;
+        }
+        // En mode révision : toutes les questions ont été servies et l'écran est vide → fin
+        if (this.isReviewMode
+            && this.reviewIndex >= this.reviewQuestions.length
+            && this.asteroids.length === 0) {
+            this.victory();
         }
     }
 
@@ -660,6 +667,7 @@ class Game {
 
                     this.loseLife();
                     this.asteroids.splice(i, 1);
+                    this.checkVictoryCondition();
                 }
             }
         }
