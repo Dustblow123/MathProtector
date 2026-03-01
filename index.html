@@ -286,6 +286,15 @@
                                 <span>Validation automatique</span>
                             </label>
                         </div>
+                        <div class="auto-validate-option sr-option-row">
+                            <label class="auto-validate-label">
+                                <input type="checkbox" id="sr-enabled-checkbox" checked>
+                                <span>Répétition espacée</span>
+                            </label>
+                            <p class="sr-option-desc">
+                                Mémorise tes erreurs et te les repose au bon moment, de plus en plus espacé — la méthode la plus efficace pour retenir durablement.
+                            </p>
+                        </div>
                         <div class="numpad-layout-selector">
                             <span class="layout-label">Numpad :</span>
                             <button class="layout-btn" data-layout="normal">Normal</button>
@@ -299,6 +308,29 @@
                             <button class="music-btn" data-music="epic" title="Fanfare héroïque">Épique</button>
                             <button class="music-btn" data-music="rhythm" title="Pattern rythmé et énergique">Rythmée</button>
                         </div>
+                    </div>
+
+                    <!-- Widget répétition espacée (affiché dynamiquement) -->
+                    <div id="sr-widget" class="sr-widget hidden">
+                        <div class="sr-widget-header">
+                            <span class="sr-widget-icon">📅</span>
+                            <span id="sr-due-label" class="sr-due-label">0 question à réviser</span>
+                        </div>
+                        <div class="sr-stats-row">
+                            <span class="sr-badge sr-badge-mastered">
+                                <span id="sr-mastered-count">0</span> maîtrisées
+                            </span>
+                            <span class="sr-badge sr-badge-learning">
+                                <span id="sr-learning-count">0</span> en cours
+                            </span>
+                            <span class="sr-badge sr-badge-total">
+                                <span id="sr-total-count">0</span> total
+                            </span>
+                        </div>
+                        <button id="sr-start-btn" class="sr-start-btn hidden">
+                            Commencer la révision du jour →
+                        </button>
+                        <p id="sr-uptodate-msg" class="sr-uptodate hidden">Tout est à jour ✓ — Reviens demain !</p>
                     </div>
 
                     <button id="start-game" class="play-btn">
@@ -608,6 +640,7 @@
     <script src="js/asteroid.js"></script>
     <script src="js/powerup.js"></script>
     <script src="js/profile.js"></script>
+    <script src="js/spaced-repetition.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
 </body>

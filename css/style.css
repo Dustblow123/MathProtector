@@ -3901,3 +3901,116 @@ body {
     width: 16px;
     height: 16px;
 }
+
+/* ============================================= */
+/* RÉPÉTITION ESPACÉE — OPTION + WIDGET          */
+/* ============================================= */
+
+/* Ligne d'option SR dans les Options */
+.sr-option-row {
+    border-top: 1px solid rgba(179, 136, 255, 0.15);
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.sr-option-desc {
+    margin: 4px 0 0 24px;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.4;
+    font-style: italic;
+}
+
+/* Widget SR dans le menu */
+.sr-widget {
+    background: linear-gradient(135deg, rgba(103, 58, 183, 0.25), rgba(63, 81, 181, 0.15));
+    border: 1px solid rgba(179, 136, 255, 0.35);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    animation: srWidgetFadeIn 0.3s ease;
+}
+
+@keyframes srWidgetFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sr-widget-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sr-widget-icon {
+    font-size: 1.1rem;
+}
+
+.sr-due-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ce93d8;
+}
+
+/* Badges de stats */
+.sr-stats-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.sr-badge {
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 500;
+}
+
+.sr-badge-mastered {
+    background: rgba(105, 240, 174, 0.15);
+    border: 1px solid rgba(105, 240, 174, 0.35);
+    color: #69f0ae;
+}
+
+.sr-badge-learning {
+    background: rgba(255, 215, 64, 0.12);
+    border: 1px solid rgba(255, 215, 64, 0.3);
+    color: #ffd740;
+}
+
+.sr-badge-total {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Bouton lancer révision */
+.sr-start-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #7c4dff, #5c35cc);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.sr-start-btn:hover {
+    background: linear-gradient(135deg, #9575cd, #7c4dff);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(124, 77, 255, 0.5);
+}
+
+/* Message "tout à jour" */
+.sr-uptodate {
+    font-size: 0.75rem;
+    color: #69f0ae;
+    text-align: center;
+    margin: 0;
+}

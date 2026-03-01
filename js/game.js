@@ -69,6 +69,10 @@ class Game {
         this.reviewQuestions = [];
         this.reviewIndex = 0;
 
+        // Répétition espacée
+        this.srEnabled = localStorage.getItem('mathGameSREnabled') !== 'false';
+        this.srManager = null;
+
         // Animation
         this.lastTime = 0;
         this.animationId = null;
@@ -129,8 +133,17 @@ class Game {
             onSelectMusic: (type) => audioManager.setMusic(type),
             onToggleSplitMode: (enabled) => this.splitMode = enabled,
             onToggleArmageddonMode: (enabled) => this.armageddonMode = enabled,
-            onSetArmageddonLevel: (level) => this.armageddonLevel = level
+            onSetArmageddonLevel: (level) => this.armageddonLevel = level,
+            onToggleSR: (enabled) => {
+                this.srEnabled = enabled;
+                localStorage.setItem('mathGameSREnabled', enabled);
+                this.updateMenuSRWidget();
+            },
+            onStartSRReview: () => this.startSRReviewMode()
         });
+
+        // Afficher le widget SR au démarrage
+        this.updateMenuSRWidget();
 
         // Event listener pour la touche Espace (activation powerup)
         document.addEventListener('keydown', (e) => {
@@ -318,6 +331,13 @@ class Game {
         this.isReviewMode = false;
         this.reviewQuestions = [];
         this.reviewIndex = 0;
+
+        // Initialiser le gestionnaire SR si activé et profil actif
+        this.srManager = null;
+        if (this.srEnabled) {
+            const profile = profileManager.getActiveProfile();
+            if (profile) this.srManager = new SpacedRepetition(profile.id);
+        }
 
         // Reset etat
         this.score = 0;
@@ -1257,6 +1277,18 @@ class Game {
             }
         }
 
+        // Enregistrer dans la répétition espacée
+        if (this.srManager) {
+            this.srManager.recordAnswer(
+                asteroid.question,
+                asteroid.answer,
+                asteroid.operator,
+                asteroid.table || null,
+                true,
+                responseTime
+            );
+        }
+
         // Réinitialiser le timer de question
         this.questionStartTime = Date.now();
 
@@ -1513,6 +1545,18 @@ class Game {
 
                 // Sauvegarder pour la révision de fin de partie
                 this.sessionErrors.push(errorData);
+
+                // Enregistrer dans la répétition espacée
+                if (this.srManager) {
+                    this.srManager.recordAnswer(
+                        closestAsteroid.question,
+                        closestAsteroid.answer,
+                        closestAsteroid.operator,
+                        closestAsteroid.table || null,
+                        false,
+                        responseTime
+                    );
+                }
             }
         }
 
@@ -1674,6 +1718,49 @@ class Game {
         cancelAnimationFrame(this.animationId);
         audioManager.stopMusic();
         ui.showScreen('menu');
+        this.updateMenuSRWidget();
+    }
+
+    /**
+     * Met à jour le widget SR dans le menu
+     */
+    updateMenuSRWidget() {
+        if (!this.srEnabled) {
+            ui.hideSRWidget();
+            return;
+        }
+        const profile = profileManager.getActiveProfile();
+        if (!profile) {
+            ui.hideSRWidget();
+            return;
+        }
+        const sr = new SpacedRepetition(profile.id);
+        const stats = sr.getStats();
+        ui.updateSRWidget(stats);
+    }
+
+    /**
+     * Démarre une session de révision espacée avec les cartes dues aujourd'hui
+     */
+    async startSRReviewMode() {
+        const profile = profileManager.getActiveProfile();
+        if (!profile) return;
+
+        const sr = new SpacedRepetition(profile.id);
+        const dueCards = sr.getDueCards(20);
+        if (!dueCards.length) return;
+
+        // Initialiser le srManager pour enregistrer les réponses durant la révision
+        this.srManager = sr;
+
+        const errors = dueCards.map(c => ({
+            question:      c.question,
+            correctAnswer: c.answer,
+            operationType: c.operator,
+            table:         c.table
+        }));
+
+        await this.startReviewMode(errors);
     }
 
     /**
@@ -1740,6 +1827,12 @@ class Game {
         ui.removeShieldEffect();
         ui.hideMultishotOverlay();
         ui.hideSlowdownOverlay();
+
+        // Initialiser le gestionnaire SR si activé (pour enregistrer les réponses durant la révision)
+        if (this.srEnabled && !this.srManager) {
+            const profile = profileManager.getActiveProfile();
+            if (profile) this.srManager = new SpacedRepetition(profile.id);
+        }
 
         // Mode astéroïdes avec le nombre d'erreurs comme cible
         this.gameMode = 'asteroids';

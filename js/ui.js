@@ -18,6 +18,16 @@ class UIManager {
         this.menuHighScore = document.getElementById('menu-high-score');
         this.musicBtns = document.querySelectorAll('.music-btn');
 
+        // Répétition espacée
+        this.srCheckbox   = document.getElementById('sr-enabled-checkbox');
+        this.srWidget     = document.getElementById('sr-widget');
+        this.srDueLabel   = document.getElementById('sr-due-label');
+        this.srMastered   = document.getElementById('sr-mastered-count');
+        this.srLearning   = document.getElementById('sr-learning-count');
+        this.srTotal      = document.getElementById('sr-total-count');
+        this.srStartBtn   = document.getElementById('sr-start-btn');
+        this.srUptodateMsg = document.getElementById('sr-uptodate-msg');
+
         // Éléments du jeu
         this.canvas = document.getElementById('game-canvas');
         this.scoreDisplay = document.getElementById('score');
@@ -249,6 +259,22 @@ class UIManager {
         this.musicBtns.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.music === savedMusic);
         });
+
+        // Répétition espacée — checkbox
+        if (this.srCheckbox) {
+            // État initial depuis localStorage
+            this.srCheckbox.checked = localStorage.getItem('mathGameSREnabled') !== 'false';
+            this.srCheckbox.addEventListener('change', () => {
+                callbacks.onToggleSR(this.srCheckbox.checked);
+            });
+        }
+
+        // Répétition espacée — bouton "Commencer la révision"
+        if (this.srStartBtn) {
+            this.srStartBtn.addEventListener('click', () => {
+                callbacks.onStartSRReview();
+            });
+        }
 
         // Démarrer le jeu
         this.startBtn.addEventListener('click', () => {
@@ -1395,6 +1421,50 @@ class UIManager {
      */
     updateHighScore(score) {
         this.menuHighScore.textContent = score.toLocaleString();
+    }
+
+    /**
+     * Met à jour le widget de répétition espacée dans le menu
+     * @param {{ total, due, mastered, learning }} stats
+     */
+    updateSRWidget(stats) {
+        if (!this.srWidget) return;
+
+        this.srWidget.classList.remove('hidden');
+
+        // Compteurs
+        if (this.srMastered) this.srMastered.textContent = stats.mastered;
+        if (this.srLearning) this.srLearning.textContent = stats.learning;
+        if (this.srTotal)    this.srTotal.textContent    = stats.total;
+
+        if (stats.total === 0) {
+            // Aucune carte encore — pas de session possible
+            if (this.srDueLabel)     this.srDueLabel.textContent = 'Joue une partie pour commencer !';
+            if (this.srStartBtn)     this.srStartBtn.classList.add('hidden');
+            if (this.srUptodateMsg)  this.srUptodateMsg.classList.add('hidden');
+        } else if (stats.due === 0) {
+            // Tout à jour
+            if (this.srDueLabel)     this.srDueLabel.textContent = 'Révisions du jour terminées';
+            if (this.srStartBtn)     this.srStartBtn.classList.add('hidden');
+            if (this.srUptodateMsg)  this.srUptodateMsg.classList.remove('hidden');
+        } else {
+            // Cartes dues
+            const n = stats.due;
+            if (this.srDueLabel) {
+                this.srDueLabel.textContent = n === 1
+                    ? '1 question à réviser aujourd\'hui'
+                    : `${n} questions à réviser aujourd'hui`;
+            }
+            if (this.srStartBtn)    this.srStartBtn.classList.remove('hidden');
+            if (this.srUptodateMsg) this.srUptodateMsg.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Cache le widget SR (SR désactivé ou pas de profil)
+     */
+    hideSRWidget() {
+        if (this.srWidget) this.srWidget.classList.add('hidden');
     }
 
     /**
