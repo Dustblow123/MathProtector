@@ -332,11 +332,14 @@ class Game {
         this.reviewQuestions = [];
         this.reviewIndex = 0;
 
-        // Initialiser le gestionnaire SR si activé et profil actif
+        // Initialiser le gestionnaire SR et incrémenter la session
         this.srManager = null;
         if (this.srEnabled) {
             const profile = profileManager.getActiveProfile();
-            if (profile) this.srManager = new SpacedRepetition(profile.id);
+            if (profile) {
+                this.srManager = new SpacedRepetition(profile.id);
+                this.srManager.incrementSession(); // cette partie compte comme une nouvelle session
+            }
         }
 
         // Reset etat
@@ -1747,10 +1750,18 @@ class Game {
         if (!profile) return;
 
         const sr = new SpacedRepetition(profile.id);
-        const dueCards = sr.getDueCards(20);
-        if (!dueCards.length) return;
 
-        // Initialiser le srManager pour enregistrer les réponses durant la révision
+        // La révision du jour compte comme une nouvelle session :
+        // un enfant qui joue puis révise dans la journée avance deux fois ses cartes.
+        sr.incrementSession();
+
+        const dueCards = sr.getDueCards(20);
+        if (!dueCards.length) {
+            this.updateMenuSRWidget();
+            return;
+        }
+
+        // Garder cette instance pour que recordAnswer() utilise la bonne session
         this.srManager = sr;
 
         const errors = dueCards.map(c => ({
