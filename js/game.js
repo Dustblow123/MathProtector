@@ -1387,6 +1387,8 @@ class Game {
      * Tente de faire apparaitre un powerup (15% de chance)
      */
     trySpawnPowerUp() {
+        // Pas de power-up en mode révision (questions ciblées, pas de gameplay générique)
+        if (this.isReviewMode) return;
         // Ne pas spawn si un powerup est deja present ou si on en a deja un stocke
         if (this.activePowerUp) return;
 
@@ -1756,6 +1758,9 @@ class Game {
     async startSRReviewMode() {
         const profile = profileManager.getActiveProfile();
         if (!profile) return;
+
+        // Utiliser la difficulté sélectionnée dans le menu
+        this.difficulty = ui.selectedDifficulty || this.difficulty;
 
         const sr = new SpacedRepetition(profile.id);
 
