@@ -1560,7 +1560,9 @@ class Game {
                 this.sessionErrors.push(errorData);
 
                 // Enregistrer dans la répétition espacée
-                if (this.srManager) {
+                // Attribution uniquement si 1 seul astéroïde à l'écran (évite de
+                // pénaliser la mauvaise carte quand plusieurs questions sont visibles)
+                if (this.srManager && this.asteroids.length === 1) {
                     this.srManager.recordAnswer(
                         closestAsteroid.question,
                         closestAsteroid.answer,
@@ -1780,7 +1782,8 @@ class Game {
         const errors = dueCards.map(c => ({
             question:      c.question,
             correctAnswer: c.answer,
-            operationType: c.operator,
+            operator:      c.operator,
+            operationType: this.getOperationTypeFromOperator(c.operator),
             table:         c.table
         }));
 
@@ -1817,6 +1820,7 @@ class Game {
         this.reviewQuestions = errors.map(e => ({
             question: e.question,
             answer: e.correctAnswer,
+            operator: e.operator || null,
             operationType: e.operationType,
             table: e.table
         }));
@@ -1931,6 +1935,8 @@ class Game {
         asteroid.question = reviewQ.question;
         asteroid.answer = reviewQ.answer;
         asteroid.table = reviewQ.table;
+        // Préserver l'opérateur d'origine pour que le SR utilise la bonne clé de carte
+        if (reviewQ.operator) asteroid.operator = reviewQ.operator;
 
         this.asteroids.push(asteroid);
     }

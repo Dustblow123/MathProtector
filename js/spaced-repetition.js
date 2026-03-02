@@ -117,7 +117,7 @@ class SpacedRepetition {
     // ── Qualité et temps ──────────────────────────────────────────────────────
 
     /**
-     * Qualité 0-5 calculée automatiquement
+     * Qualité 1-5 calculée automatiquement
      *   1   = raté
      *   2   = réussi mais lent (> 1.5× la moyenne)
      *   3   = réussi dans la norme
@@ -160,8 +160,8 @@ class SpacedRepetition {
             card.ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
         ));
 
-        if (quality < 3) {
-            // ── Échec : retour en phase sessions, due à la prochaine ────────
+        if (quality < 2) {
+            // ── Échec (mauvaise réponse) : retour en phase sessions, due à la prochaine ──
             card.repetitions       = 0;
             card.sessionInterval   = 1;
             card.dayInterval       = 0;
@@ -276,8 +276,8 @@ class SpacedRepetition {
                     : (this.sessionCount - (b.nextReviewSession ?? 0));
                 return (2.5 - a.ef) * 3 + overdueA - ((2.5 - b.ef) * 3 + overdueB);
             })
-            .slice(0, limit)
-            .reverse(); // les plus urgentes en dernier = présentées en premier dans le jeu
+            .slice(-limit)  // garder les N plus urgentes (tri ascendant → elles sont en fin de tableau)
+            .reverse();     // les plus urgentes en premier = présentées en premier dans le jeu
     }
 
     /**
