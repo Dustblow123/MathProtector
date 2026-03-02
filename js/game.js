@@ -1778,11 +1778,13 @@ class Game {
         // Utiliser la difficulté sélectionnée dans le menu
         this.difficulty = ui.selectedDifficulty || this.difficulty;
 
-        const sr = new SpacedRepetition(profile.id);
-
-        // La révision du jour compte comme une nouvelle session :
-        // un enfant qui joue puis révise dans la journée avance deux fois ses cartes.
-        sr.incrementSession();
+        // Réutiliser l'instance existante si une partie vient d'être jouée (session déjà incrémentée).
+        // Sinon, créer une nouvelle instance : la révision lancée depuis le menu compte comme une session.
+        const sr = this.srManager ?? (() => {
+            const instance = new SpacedRepetition(profile.id);
+            instance.incrementSession();
+            return instance;
+        })();
 
         const dueCards = sr.getDueCards(20);
         if (!dueCards.length) {
