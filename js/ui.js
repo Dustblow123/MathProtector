@@ -27,6 +27,7 @@ class UIManager {
         this.srTotal      = document.getElementById('sr-total-count');
         this.srStartBtn   = document.getElementById('sr-start-btn');
         this.srUptodateMsg = document.getElementById('sr-uptodate-msg');
+        this.srResetBtn   = document.getElementById('sr-reset-btn');
 
         // Éléments du jeu
         this.canvas = document.getElementById('game-canvas');
@@ -273,6 +274,13 @@ class UIManager {
         if (this.srStartBtn) {
             this.srStartBtn.addEventListener('click', () => {
                 callbacks.onStartSRReview();
+            });
+        }
+
+        // Répétition espacée — bouton "Remettre à zéro"
+        if (this.srResetBtn) {
+            this.srResetBtn.addEventListener('click', () => {
+                callbacks.onResetSR();
             });
         }
 
@@ -1436,6 +1444,9 @@ class UIManager {
         if (this.srMastered) this.srMastered.textContent = stats.mastered;
         if (this.srLearning) this.srLearning.textContent = stats.learning;
         if (this.srTotal)    this.srTotal.textContent    = stats.total;
+
+        // Le bouton reset est visible dès qu'il y a des cartes
+        if (this.srResetBtn) this.srResetBtn.classList.toggle('hidden', stats.total === 0);
 
         if (stats.total === 0) {
             // Aucune carte encore — pas de session possible

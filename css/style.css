@@ -4007,6 +4007,26 @@ body {
     box-shadow: 0 4px 14px rgba(124, 77, 255, 0.5);
 }
 
+/* Bouton reset répétition espacée */
+.sr-reset-btn {
+    width: 100%;
+    padding: 5px 8px;
+    margin-top: 6px;
+    background: transparent;
+    border: 1px solid rgba(255, 82, 82, 0.35);
+    border-radius: 6px;
+    color: rgba(255, 82, 82, 0.65);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sr-reset-btn:hover {
+    background: rgba(255, 82, 82, 0.1);
+    border-color: #ff5252;
+    color: #ff5252;
+}
+
 /* Message "tout à jour" */
 .sr-uptodate {
     font-size: 0.75rem;

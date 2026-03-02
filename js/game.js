@@ -139,7 +139,8 @@ class Game {
                 localStorage.setItem('mathGameSREnabled', enabled);
                 this.updateMenuSRWidget();
             },
-            onStartSRReview: () => this.startSRReviewMode()
+            onStartSRReview: () => this.startSRReviewMode(),
+            onResetSR: () => this.resetSRData()
         });
 
         // Afficher le widget SR au démarrage
@@ -1734,6 +1735,19 @@ class Game {
         audioManager.stopMusic();
         ui.showScreen('menu');
         this.updateMenuSRWidget();
+    }
+
+    /**
+     * Réinitialise toutes les données SR du profil actif après confirmation
+     */
+    resetSRData() {
+        const profile = profileManager.getActiveProfile();
+        if (!profile) return;
+        if (confirm('Remettre à zéro la répétition espacée ?\nToutes les cartes et la progression seront perdues.')) {
+            profileManager.resetSRData(profile.id);
+            this.srManager = null;
+            this.updateMenuSRWidget();
+        }
     }
 
     /**

@@ -904,6 +904,16 @@ class ProfileManager {
     }
 
     /**
+     * Réinitialise les données de répétition espacée d'un profil
+     * @param {string} profileId - ID du profil
+     */
+    resetSRData(profileId) {
+        if (!profileId) return;
+        localStorage.removeItem(`sr_cards_${profileId}`);
+        localStorage.removeItem(`sr_session_${profileId}`);
+    }
+
+    /**
      * Réinitialise toutes les données d'entraînement d'un profil
      * @param {string} profileId - ID du profil
      */
@@ -911,6 +921,7 @@ class ProfileManager {
         this.resetAggregatedStats(profileId);
         this.resetErrorHistory(profileId);
         this.resetSessionHistory(profileId);
+        this.resetSRData(profileId);
     }
 }
 
