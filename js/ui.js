@@ -1446,7 +1446,13 @@ class UIManager {
         if (this.srTotal)    this.srTotal.textContent    = stats.total;
 
         // Le bouton reset est visible dès qu'il y a des cartes
-        if (this.srResetBtn) this.srResetBtn.classList.toggle('hidden', stats.total === 0);
+        if (this.srResetBtn) {
+            if (stats.total > 0) {
+                this.srResetBtn.classList.remove('hidden');
+            } else {
+                this.srResetBtn.classList.add('hidden');
+            }
+        }
 
         if (stats.total === 0) {
             // Aucune carte encore — pas de session possible

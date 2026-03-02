@@ -4009,22 +4009,24 @@ body {
 
 /* Bouton reset répétition espacée */
 .sr-reset-btn {
+    display: block;
     width: 100%;
-    padding: 5px 8px;
-    margin-top: 6px;
-    background: transparent;
-    border: 1px solid rgba(255, 82, 82, 0.35);
+    padding: 6px 10px;
+    margin-top: 8px;
+    background: rgba(255, 82, 82, 0.08);
+    border: 1px solid rgba(255, 82, 82, 0.55);
     border-radius: 6px;
-    color: rgba(255, 82, 82, 0.65);
-    font-size: 0.72rem;
+    color: rgba(255, 130, 130, 0.9);
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-align: center;
 }
 
 .sr-reset-btn:hover {
-    background: rgba(255, 82, 82, 0.1);
+    background: rgba(255, 82, 82, 0.18);
     border-color: #ff5252;
-    color: #ff5252;
+    color: #ff8a80;
 }
 
 /* Message "tout à jour" */
