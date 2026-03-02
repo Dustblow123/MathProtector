@@ -282,15 +282,35 @@ class SpacedRepetition {
 
     /**
      * Stats globales pour le widget du menu.
-     * @returns {{ total, due, mastered, learning }}
+     * @returns {{ total, due, mastered, learning,
+     *             nextReviewSession, nextReviewDate, currentSession }}
      */
     getStats() {
-        const all = Object.values(this.cards);
+        const all    = Object.values(this.cards);
+        const notDue = all.filter(c => !this._isDue(c));
+
+        // Session la plus proche parmi les cartes en phase sessions
+        const sessionPending = notDue.filter(
+            c => c.nextReviewSession !== null && c.nextReviewSession !== undefined
+        );
+        const nextReviewSession = sessionPending.length > 0
+            ? sessionPending.reduce((m, c) => Math.min(m, c.nextReviewSession), Infinity)
+            : null;
+
+        // Date la plus proche parmi les cartes en phase jours
+        const datePending = notDue.filter(c => c.nextReviewDate !== null && c.nextReviewDate !== undefined);
+        const nextReviewDate = datePending.length > 0
+            ? datePending.reduce((m, c) => Math.min(m, c.nextReviewDate), Infinity)
+            : null;
+
         return {
-            total:    all.length,
-            due:      all.filter(c => this._isDue(c)).length,
-            mastered: all.filter(c => c.repetitions >= 3 && c.dayInterval >= 21).length,
-            learning: all.filter(c => c.lastSeen !== null && !this._isDue(c)).length,
+            total:          all.length,
+            due:            all.filter(c => this._isDue(c)).length,
+            mastered:       all.filter(c => c.repetitions >= 3 && c.dayInterval >= 21).length,
+            learning:       all.filter(c => c.lastSeen !== null && !this._isDue(c)).length,
+            nextReviewSession,   // numéro absolu de session (ou null)
+            nextReviewDate,      // timestamp ms (ou null)
+            currentSession: this.sessionCount,
         };
     }
 }

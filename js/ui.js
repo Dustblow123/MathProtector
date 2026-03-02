@@ -1460,10 +1460,13 @@ class UIManager {
             if (this.srStartBtn)     this.srStartBtn.classList.add('hidden');
             if (this.srUptodateMsg)  this.srUptodateMsg.classList.add('hidden');
         } else if (stats.due === 0) {
-            // Tout à jour
-            if (this.srDueLabel)     this.srDueLabel.textContent = 'Révisions du jour terminées';
-            if (this.srStartBtn)     this.srStartBtn.classList.add('hidden');
-            if (this.srUptodateMsg)  this.srUptodateMsg.classList.remove('hidden');
+            // Tout à jour — construire le message "quand revenir"
+            if (this.srDueLabel) this.srDueLabel.textContent = 'Révisions du jour terminées';
+            if (this.srStartBtn) this.srStartBtn.classList.add('hidden');
+            if (this.srUptodateMsg) {
+                this.srUptodateMsg.textContent = this._buildSRNextMessage(stats);
+                this.srUptodateMsg.classList.remove('hidden');
+            }
         } else {
             // Cartes dues
             const n = stats.due;
@@ -1482,6 +1485,40 @@ class UIManager {
      */
     hideSRWidget() {
         if (this.srWidget) this.srWidget.classList.add('hidden');
+    }
+
+    /**
+     * Construit le message "quand revenir" selon l'état hybride sessions/jours.
+     * @param {{ nextReviewSession, nextReviewDate, currentSession }} stats
+     * @returns {string}
+     */
+    _buildSRNextMessage(stats) {
+        const parts = [];
+
+        // Phase sessions : combien de parties avant la prochaine révision ?
+        if (stats.nextReviewSession !== null) {
+            const delta = stats.nextReviewSession - stats.currentSession;
+            if (delta <= 1) {
+                parts.push('dès la prochaine partie');
+            } else {
+                parts.push(`dans ${delta} parties`);
+            }
+        }
+
+        // Phase jours : dans combien de jours ?
+        if (stats.nextReviewDate !== null) {
+            const daysLeft = Math.ceil((stats.nextReviewDate - Date.now()) / 86_400_000);
+            if (daysLeft <= 0) {
+                parts.push('aujourd\'hui');
+            } else if (daysLeft === 1) {
+                parts.push('demain');
+            } else {
+                parts.push(`dans ${daysLeft} jours`);
+            }
+        }
+
+        if (parts.length === 0) return 'Tout est maîtrisé ! ✓';
+        return `Tout est à jour ✓ — Reviens ${parts.join(' · ')} !`;
     }
 
     /**
