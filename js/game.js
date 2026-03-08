@@ -1833,13 +1833,24 @@ class Game {
         await audioManager.init();
 
         this.isReviewMode = true;
-        this.reviewQuestions = errors.map(e => ({
+        const baseQuestions = errors.map(e => ({
             question: e.question,
             answer: e.correctAnswer,
             operator: e.operator || null,
             operationType: e.operationType,
             table: e.table
         }));
+
+        // Minimum 20 questions : répéter et mélanger si nécessaire
+        const MIN_REVIEW = 20;
+        let expanded = [...baseQuestions];
+        while (expanded.length < MIN_REVIEW) {
+            const shuffled = [...baseQuestions].sort(() => Math.random() - 0.5);
+            expanded.push(...shuffled);
+        }
+        expanded = expanded.slice(0, Math.max(expanded.length, MIN_REVIEW));
+        // Mélanger la liste finale
+        this.reviewQuestions = expanded.sort(() => Math.random() - 0.5);
         this.reviewIndex = 0;
 
         // Garder la difficulté et les tables de la partie précédente
@@ -1878,9 +1889,9 @@ class Game {
             if (profile) this.srManager = new SpacedRepetition(profile.id);
         }
 
-        // Mode astéroïdes avec le nombre d'erreurs comme cible
+        // Mode astéroïdes avec le nombre de questions de révision comme cible
         this.gameMode = 'asteroids';
-        this.targetAsteroids = errors.length;
+        this.targetAsteroids = this.reviewQuestions.length;
 
         // Nettoyer le timer précédent
         if (this.gameTimer) {
@@ -1904,7 +1915,7 @@ class Game {
         ui.updateScore(0);
         ui.updateCombo(1);
         ui.resetLives();
-        ui.setupModeDisplay('asteroids', 0, errors.length);
+        ui.setupModeDisplay('asteroids', 0, this.reviewQuestions.length);
         if (ui.answerInput) ui.answerInput.value = '';
         ui.showScreen('game');
 
